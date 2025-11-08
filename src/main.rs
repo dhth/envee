@@ -31,13 +31,13 @@ async fn main() -> anyhow::Result<()> {
             plain_output,
             only_validate_versions,
         } => {
-            let maybe_token = if no_commit_logs {
+            let maybe_token = if no_commit_logs || only_validate_versions {
                 None
             } else {
                 get_env_var(ENV_VAR_GH_TOKEN)?
             };
 
-            if !no_commit_logs && maybe_token.is_none() {
+            if !(no_commit_logs || only_validate_versions) && maybe_token.is_none() {
                 anyhow::bail!(
                     "{ENV_VAR_GH_TOKEN} needs to be set to fetch commit logs from GitHub"
                 );
