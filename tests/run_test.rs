@@ -36,7 +36,7 @@ fn shows_help() {
 }
 
 #[test]
-fn debug_mode_works() {
+fn debug_flag_works() {
     // GIVEN
     let fx = Fixture::new();
     let mut cmd = fx.cmd([
