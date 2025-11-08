@@ -46,8 +46,8 @@ lint-fix:
 publish-dry:
     cargo publish --dry-run --allow-dirty
 
-run:
-    cargo run
+run *FLAGS:
+    cargo run {{FLAGS}}
 
 review:
     cargo insta test --review
@@ -60,17 +60,3 @@ all:
     cargo fmt --all
     cargo clippy --all-targets
     cargo nextest run
-
-sys-info:
-    @echo "os_family: {{ os_family() }}"
-    @echo "os: {{ os() }}"
-    @echo "arch: {{ arch() }}"
-
-arch-specific:
-    just {{ if arch() == "aarch64" { "arm-stuff" } else { "x86-stuff" } }}
-
-@arm-stuff:
-    echo "arm!"
-
-@x86-stuff:
-    echo "x86!"

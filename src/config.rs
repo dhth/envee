@@ -8,7 +8,7 @@ pub enum TablePreset {
 #[derive(Debug, Clone, Copy)]
 pub struct StdoutConfig {
     pub table_preset: TablePreset,
-    pub highlight_out_of_sync: bool,
+    pub plain_output: bool,
 }
 
 #[derive(Debug, Clone, Copy)]

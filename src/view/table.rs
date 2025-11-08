@@ -16,7 +16,7 @@ pub fn render_results_table(result: DiffResult, config: &StdoutConfig) -> String
     table.set_header(header);
 
     for row in result.app_results {
-        let should_highlight = config.highlight_out_of_sync && !row.in_sync;
+        let should_highlight = !config.plain_output && !row.in_sync;
 
         if should_highlight {
             let mut cells = vec![Cell::new(&row.app).fg(Color::Red)];
@@ -65,7 +65,7 @@ mod tests {
         let result = create_test_diff_result();
         let config = StdoutConfig {
             table_preset: TablePreset::Nothing,
-            highlight_out_of_sync: false,
+            plain_output: true,
         };
 
         // WHEN
@@ -87,7 +87,7 @@ mod tests {
         let result = create_test_diff_result();
         let config = StdoutConfig {
             table_preset: TablePreset::AsciiFull,
-            highlight_out_of_sync: false,
+            plain_output: true,
         };
 
         // WHEN
