@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 chrono = { version = "0.4.42", features = ["serde"] }
+clap = { version = "4.5.51", features = ["derive"] }
 comfy-table = "7.2.1"
 futures = "0.3.31"
 reqwest = { version = "0.12.24", features = ["json"] }
@@ -16,6 +17,7 @@ toml = { version = "0.9.7", features = ["parse"] }
 
 [dev-dependencies]
 insta = { version = "1.43.2", features = ["yaml"] }
+insta-cmd = "0.6.0"
 
 [profile.dev.package]
 insta.opt-level = 3
