@@ -1,0 +1,33 @@
+envs = ["dev", "prod"]
+github_org = "dhth"
+git_tag_transform = "v{{version}}"
+
+[[versions]]
+app = "repo-a"
+env = "prod"
+version = "0.1.0"
+
+[[versions]]
+app = "repo-b"
+env = "prod"
+version = "1.0.0"
+
+[[versions]]
+app = "repo-c"
+env = "prod"
+version = "1.9.0"
+
+[[versions]]
+app = "repo-a"
+env = "dev"
+version = "0.1.0"
+
+[[versions]]
+app = "repo-b"
+env = "dev"
+version = "1.2.0"
+
+[[versions]]
+app = "repo-c"
+env = "dev"
+version = "2.0.0"
