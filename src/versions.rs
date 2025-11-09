@@ -24,7 +24,7 @@ where
     Ok(versions)
 }
 
-pub(crate) fn get_versions<S>(contents: S, app_filter: Option<&Regex>) -> anyhow::Result<Versions>
+pub fn get_versions<S>(contents: S, app_filter: Option<&Regex>) -> anyhow::Result<Versions>
 where
     S: AsRef<str>,
 {

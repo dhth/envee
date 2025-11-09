@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Deserialize)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub(crate) struct RawVersions {
+pub struct RawVersions {
     pub envs: Vec<String>,
     pub github_org: String,
     pub versions: Vec<RawAppVersion>,
