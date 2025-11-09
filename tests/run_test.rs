@@ -307,6 +307,34 @@ fn fails_if_no_versions_defined() {
 }
 
 #[test]
+fn fails_if_no_versions_match_filter() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd([
+        "run",
+        "--no-commit-logs",
+        "--filter",
+        "absent",
+        "--versions",
+        "tests/assets/valid-versions.toml",
+    ]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r#"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: couldn't get versions from file "tests/assets/valid-versions.toml"
+
+    Caused by:
+        no versions match the provided filter
+    "#);
+}
+
+#[test]
 fn fails_if_no_gh_token_is_provided() {
     // GIVEN
     let fx = Fixture::new();
