@@ -2,6 +2,34 @@ use derive_more::{Deref, Display};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 
+macro_rules! define_validated_string_newtype {
+    ($name:ident, $error_msg:literal) => {
+        #[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, Display)]
+        #[cfg_attr(test, derive(serde::Serialize))]
+        pub struct $name(String);
+
+        impl TryFrom<String> for $name {
+            type Error = &'static str;
+
+            fn try_from(s: String) -> Result<Self, Self::Error> {
+                let trimmed = s.trim();
+                if trimmed.is_empty() {
+                    Err($error_msg)
+                } else {
+                    Ok(Self(trimmed.to_string()))
+                }
+            }
+        }
+
+        #[cfg(test)]
+        impl From<&str> for $name {
+            fn from(s: &str) -> Self {
+                Self(s.to_string())
+            }
+        }
+    };
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct RawVersions {
@@ -13,100 +41,16 @@ pub struct RawVersions {
 
 #[derive(Debug, Clone, Deserialize)]
 #[cfg_attr(test, derive(serde::Serialize))]
-pub(crate) struct RawAppVersion {
+pub struct RawAppVersion {
     pub app: String,
     pub env: String,
     pub version: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, Display)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub struct App(String);
-
-impl TryFrom<String> for App {
-    type Error = &'static str;
-
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        let trimmed = s.trim().to_string();
-        if trimmed.is_empty() {
-            Err("app is empty")
-        } else {
-            Ok(Self(trimmed))
-        }
-    }
-}
-
-#[cfg(test)]
-impl From<&str> for App {
-    fn from(s: &str) -> Self {
-        Self(s.to_string())
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, Display)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub struct Env(String);
-
-impl TryFrom<String> for Env {
-    type Error = &'static str;
-
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        let trimmed = s.trim().to_string();
-        if trimmed.is_empty() {
-            Err("env is empty")
-        } else {
-            Ok(Self(trimmed))
-        }
-    }
-}
-
-#[cfg(test)]
-impl From<&str> for Env {
-    fn from(s: &str) -> Self {
-        Self(s.to_string())
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deref, Display)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub struct Version(String);
-
-impl TryFrom<String> for Version {
-    type Error = &'static str;
-
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        let trimmed = s.trim().to_string();
-        if trimmed.is_empty() {
-            Err("version is empty")
-        } else {
-            Ok(Self(trimmed))
-        }
-    }
-}
-
-#[cfg(test)]
-impl From<&str> for Version {
-    fn from(s: &str) -> Self {
-        Self(s.to_string())
-    }
-}
-
-#[derive(Debug, Clone, Deref, Display)]
-#[cfg_attr(test, derive(serde::Serialize))]
-pub struct GithubOrg(String);
-
-impl TryFrom<String> for GithubOrg {
-    type Error = &'static str;
-
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        let trimmed = s.trim().to_string();
-        if trimmed.is_empty() {
-            Err("github_org is empty")
-        } else {
-            Ok(Self(trimmed))
-        }
-    }
-}
+define_validated_string_newtype!(App, "app is empty");
+define_validated_string_newtype!(Env, "env is empty");
+define_validated_string_newtype!(Version, "version is empty");
+define_validated_string_newtype!(GithubOrg, "github_org is empty");
 
 #[derive(Debug, Clone, Deref, Display)]
 #[cfg_attr(test, derive(serde::Serialize))]
@@ -116,11 +60,11 @@ impl TryFrom<String> for GitTagTransform {
     type Error = &'static str;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
-        let trimmed = s.trim().to_string();
+        let trimmed = s.trim();
         if !trimmed.contains("{{version}}") {
             Err("git_tag_transform doesn't include the placeholder \"{{version}}\"")
         } else {
-            Ok(Self(trimmed))
+            Ok(Self(trimmed.to_string()))
         }
     }
 }
