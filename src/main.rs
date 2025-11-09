@@ -2,6 +2,7 @@ mod args;
 mod config;
 mod domain;
 mod service;
+mod versions;
 mod view;
 
 use crate::config::StdoutConfig;
@@ -10,8 +11,8 @@ use args::Args;
 use chrono::Utc;
 use clap::Parser;
 use config::{Config, OutputType};
-use domain::Versions;
-use std::{env::VarError, path::Path};
+use regex::Regex;
+use std::env::VarError;
 
 const ENV_VAR_GH_TOKEN: &str = "ENVEE_GH_TOKEN";
 
@@ -31,7 +32,9 @@ async fn main() -> anyhow::Result<()> {
             table_style,
             plain_output,
             only_validate_versions,
+            app_filter,
         } => {
+            // VALIDATIONS
             let maybe_token = if no_commit_logs || only_validate_versions {
                 None
             } else {
@@ -44,7 +47,14 @@ async fn main() -> anyhow::Result<()> {
                 );
             }
 
-            let versions = get_versions_from_file(&versions_file_path)?;
+            let app_filter = app_filter
+                .map(|pattern| Regex::new(&pattern))
+                .transpose()
+                .context("invalid regex pattern provided")?;
+
+            // VALIDATIONS END
+
+            let versions = versions::get_from_file(&versions_file_path, app_filter.as_ref())?;
 
             if only_validate_versions {
                 println!("versions file is valid ✅");
@@ -84,27 +94,6 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
-}
-
-pub fn get_versions_from_file<P>(path: P) -> anyhow::Result<Versions>
-where
-    P: AsRef<Path>,
-{
-    let contents = std::fs::read_to_string(&path).with_context(|| {
-        format!(
-            "couldn't read file \"{}\"",
-            &path.as_ref().to_string_lossy()
-        )
-    })?;
-
-    let versions: Versions = toml::from_str(&contents).with_context(|| {
-        format!(
-            r#"couldn't parse file "{}""#,
-            &path.as_ref().to_string_lossy()
-        )
-    })?;
-
-    Ok(versions)
 }
 
 fn get_env_var(key: &str) -> anyhow::Result<Option<String>> {

@@ -1,0 +1,3 @@
+envs = ["dev", "prod"]
+github_org = "dhth"
+git_tag_transform = "v{{version}}"
