@@ -90,12 +90,9 @@ version = "2.0.0"
         // GIVEN
 
         // WHEN
-        let result = get_versions(VALID_TOML, None);
+        let versions = get_versions(VALID_TOML, None).expect("result should've been Ok");
 
         // THEN
-        assert!(result.is_ok());
-        let versions = result.unwrap();
-
         let mut settings = insta::Settings::clone_current();
         settings.set_sort_maps(true);
         settings.bind(|| {
@@ -134,12 +131,9 @@ version = "2.0.0"
         let filter = Regex::new("repo-[ab]").unwrap();
 
         // WHEN
-        let result = get_versions(VALID_TOML, Some(&filter));
+        let versions = get_versions(VALID_TOML, Some(&filter)).expect("result should've been Ok");
 
         // THEN
-        assert!(result.is_ok());
-        let versions = result.unwrap();
-
         let mut settings = insta::Settings::clone_current();
         settings.set_sort_maps(true);
         settings.bind(|| {
