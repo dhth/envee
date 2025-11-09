@@ -7,6 +7,7 @@ edition = "2024"
 anyhow = "1.0.100"
 chrono = { version = "0.4.42", features = ["serde"] }
 clap = { version = "4.5.51", features = ["derive"] }
+colored = "3.0.0"
 comfy-table = "7.2.1"
 derive_more = { version = "2.0.1", features = ["deref", "display"] }
 futures = "0.3.31"

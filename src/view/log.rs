@@ -1,8 +1,24 @@
 use super::date::get_humanized_date;
 use crate::domain::CommitLog;
 use chrono::{DateTime, Utc};
+use colored::*;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
-pub fn get_commit_logs(logs: Vec<CommitLog>, reference_time: DateTime<Utc>) -> String {
+const AUTHOR_COLOR_POOL: [Color; 6] = [
+    Color::Blue,
+    Color::BrightBlue,
+    Color::BrightCyan,
+    Color::BrightMagenta,
+    Color::Cyan,
+    Color::Magenta,
+];
+
+pub fn get_commit_logs(
+    logs: Vec<CommitLog>,
+    reference_time: DateTime<Utc>,
+    plain_output: bool,
+) -> String {
     let mut output = String::new();
 
     for (i, log) in logs.iter().enumerate() {
@@ -22,10 +38,23 @@ pub fn get_commit_logs(logs: Vec<CommitLog>, reference_time: DateTime<Utc>) -> S
 
             let relative_time = get_humanized_date(&commit.commit.author.date, &reference_time);
 
-            output.push_str(&format!(
-                " {} - {} ({}) <{}>\n",
-                short_sha, first_line, relative_time, commit.commit.author.name
-            ));
+            let formatted_line = if plain_output {
+                format!(
+                    " {} - {} ({}) <{}>\n",
+                    short_sha, first_line, relative_time, commit.commit.author.name
+                )
+            } else {
+                let author_color = get_author_color(&commit.commit.author.name);
+                format!(
+                    " {} - {} ({}) <{}>\n",
+                    short_sha.dimmed(),
+                    first_line,
+                    relative_time.yellow(),
+                    commit.commit.author.name.color(author_color)
+                )
+            };
+
+            output.push_str(&formatted_line);
         }
 
         if i < logs.len() - 1 {
@@ -36,8 +65,19 @@ pub fn get_commit_logs(logs: Vec<CommitLog>, reference_time: DateTime<Utc>) -> S
     output
 }
 
+fn get_author_color(author_name: &str) -> Color {
+    let mut hasher = DefaultHasher::new();
+    author_name.hash(&mut hasher);
+    let hash = hasher.finish();
+
+    let index = (hash % AUTHOR_COLOR_POOL.len() as u64) as usize;
+    AUTHOR_COLOR_POOL[index]
+}
+
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use super::*;
     use crate::domain::{Author, Commit, CommitDetail};
     use chrono::TimeZone;
@@ -96,7 +136,7 @@ mod tests {
         };
 
         // WHEN
-        let result = get_commit_logs(vec![log1, log2], reference);
+        let result = get_commit_logs(vec![log1, log2], reference, true);
 
         // THEN
         insta::assert_snapshot!(result, @r"
@@ -109,5 +149,46 @@ mod tests {
          xyz9876 - Second commit (1h ago) <User A>
          abc1234 - First commit (1d ago) <User B>
         ");
+    }
+
+    #[test]
+    fn get_author_color_returns_consistent_color_for_same_author() {
+        // GIVEN
+        let author = "Alan Turing";
+
+        // WHEN
+        let mut set = HashSet::new();
+        for _ in 1..=100 {
+            set.insert(get_author_color(author).to_bg_str());
+        }
+
+        // THEN
+        assert_eq!(set.len(), 1);
+    }
+
+    #[test]
+    fn get_author_color_returns_valid_color_from_pool() {
+        // GIVEN
+        let test_authors = [
+            "Alan Turing",
+            "Grace Hopper",
+            "Donald Knuth",
+            "Ada Lovelace",
+            "Dennis Ritchie",
+            "Ken Thompson",
+            "Linus Torvalds",
+            "",
+        ];
+
+        // WHEN
+        // THEN
+        for author in &test_authors {
+            let color = get_author_color(author);
+            assert!(
+                AUTHOR_COLOR_POOL.contains(&color),
+                "Color for author '{}' should be in the valid color pool",
+                author
+            );
+        }
     }
 }
