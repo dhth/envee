@@ -2,6 +2,7 @@ use super::date::get_humanized_date;
 use crate::domain::CommitLog;
 use chrono::{DateTime, Utc};
 use colored::*;
+use comfy_table::{Cell, Color as TableColor, Table, presets};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
@@ -13,6 +14,8 @@ const AUTHOR_COLOR_POOL: [Color; 6] = [
     Color::Cyan,
     Color::Magenta,
 ];
+
+const COMMIT_MESSAGE_MAX_LENGTH: usize = 80;
 
 pub fn get_commit_logs(
     logs: Vec<CommitLog>,
@@ -27,6 +30,9 @@ pub fn get_commit_logs(
             log.app, log.from_env, log.to_env, log.from_version, log.to_version
         ));
 
+        let mut table = Table::new();
+        table.load_preset(presets::NOTHING);
+
         for commit in &log.commits {
             let short_sha = &commit.sha[..7.min(commit.sha.len())];
             let first_line = commit
@@ -36,26 +42,29 @@ pub fn get_commit_logs(
                 .next()
                 .unwrap_or(&commit.commit.message);
 
+            let truncated_message = truncate_message(first_line, COMMIT_MESSAGE_MAX_LENGTH);
             let relative_time = get_humanized_date(&commit.commit.author.date, &reference_time);
 
-            let formatted_line = if plain_output {
-                format!(
-                    " {} - {} ({}) <{}>\n",
-                    short_sha, first_line, relative_time, commit.commit.author.name
-                )
+            if plain_output {
+                table.add_row(vec![
+                    short_sha,
+                    &truncated_message,
+                    &relative_time,
+                    &commit.commit.author.name,
+                ]);
             } else {
                 let author_color = get_author_color(&commit.commit.author.name);
-                format!(
-                    " {} - {} ({}) <{}>\n",
-                    short_sha.dimmed(),
-                    first_line,
-                    relative_time.yellow(),
-                    commit.commit.author.name.color(author_color)
-                )
-            };
-
-            output.push_str(&formatted_line);
+                table.add_row(vec![
+                    Cell::new(short_sha).fg(TableColor::DarkGrey),
+                    Cell::new(&truncated_message),
+                    Cell::new(&relative_time).fg(TableColor::Yellow),
+                    Cell::new(&commit.commit.author.name).fg(map_to_table_color(author_color)),
+                ]);
+            }
         }
+
+        output.push_str(&table.to_string());
+        output.push('\n');
 
         if i < logs.len() - 1 {
             output.push('\n');
@@ -72,6 +81,26 @@ fn get_author_color(author_name: &str) -> Color {
 
     let index = (hash % AUTHOR_COLOR_POOL.len() as u64) as usize;
     AUTHOR_COLOR_POOL[index]
+}
+
+fn truncate_message(message: &str, max_len: usize) -> String {
+    if message.len() <= max_len {
+        message.to_string()
+    } else {
+        format!("{}...", &message[..max_len - 3])
+    }
+}
+
+fn map_to_table_color(color: Color) -> TableColor {
+    match color {
+        Color::Blue => TableColor::Blue,
+        Color::BrightBlue => TableColor::Blue,
+        Color::BrightCyan => TableColor::Cyan,
+        Color::BrightMagenta => TableColor::Magenta,
+        Color::Cyan => TableColor::Cyan,
+        Color::Magenta => TableColor::Magenta,
+        _ => TableColor::White,
+    }
 }
 
 #[cfg(test)]
@@ -113,9 +142,20 @@ mod tests {
             to_version: "2.1.0".into(),
             commits: vec![
                 Commit {
-                    sha: "xyz9876543210".to_string(),
+                    sha: "1443d43".to_string(),
                     commit: CommitDetail {
-                        message: "Second commit".to_string(),
+                        message: "add cli test for when no application versions match app filter"
+                            .to_string(),
+                        author: Author {
+                            name: "Dhruv Thakur".to_string(),
+                            date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 30, 0).unwrap(),
+                        },
+                    },
+                },
+                Commit {
+                    sha: "c536d77".to_string(),
+                    commit: CommitDetail {
+                        message: "allow filtering apps to run for (#3) commit".to_string(),
                         author: Author {
                             name: "User A".to_string(),
                             date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 0, 0).unwrap(),
@@ -123,11 +163,11 @@ mod tests {
                     },
                 },
                 Commit {
-                    sha: "abc1234567890".to_string(),
+                    sha: "2ff3e97".to_string(),
                     commit: CommitDetail {
-                        message: "First commit".to_string(),
+                        message: "allow configuring table style (#2) commit".to_string(),
                         author: Author {
-                            name: "User B".to_string(),
+                            name: "Dhruv Thakur".to_string(),
                             date: Utc.with_ymd_and_hms(2025, 1, 15, 10, 0, 0).unwrap(),
                         },
                     },
@@ -142,12 +182,50 @@ mod tests {
         insta::assert_snapshot!(result, @r"
         app-one prod..dev (1.0.0..1.1.0)
 
-         abc1234 - First commit (1d ago) <User A>
+         abc1234  First commit  1d ago  User A 
 
         app-two prod..dev (2.0.0..2.1.0)
 
-         xyz9876 - Second commit (1h ago) <User A>
-         abc1234 - First commit (1d ago) <User B>
+         1443d43  add cli test for when no application versions match app filter  30m ago  Dhruv Thakur 
+         c536d77  allow filtering apps to run for (#3) commit                     1h ago   User A       
+         2ff3e97  allow configuring table style (#2) commit                       1d ago   Dhruv Thakur
+        ");
+    }
+
+    #[test]
+    fn long_commit_messages_are_trimmed() {
+        // GIVEN
+        let reference = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
+
+        let log = CommitLog {
+            app: "app-two".into(),
+            from_env: "prod".into(),
+            to_env: "dev".into(),
+            from_version: "2.0.0".into(),
+            to_version: "2.1.0".into(),
+            commits: vec![
+                Commit {
+                    sha: "1443d43".to_string(),
+                    commit: CommitDetail {
+                        message: "add cli test for when no application versions match app filter (this commit is very long for some reason)"
+                            .to_string(),
+                        author: Author {
+                            name: "Dhruv Thakur".to_string(),
+                            date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 30, 0).unwrap(),
+                        },
+                    },
+                },
+            ],
+        };
+
+        // WHEN
+        let result = get_commit_logs(vec![log], reference, true);
+
+        // THEN
+        insta::assert_snapshot!(result, @r"
+        app-two prod..dev (2.0.0..2.1.0)
+
+         1443d43  add cli test for when no application versions match app filter (this commit i...  30m ago  Dhruv Thakur
         ");
     }
 
