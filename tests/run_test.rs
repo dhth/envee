@@ -24,25 +24,57 @@ fn shows_help() {
     Usage: envee run [OPTIONS]
 
     Options:
-      -V, --versions <PATH>            Path to the versions file [default: versions.toml]
-      -C, --no-commit-logs             Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
-          --debug                      Output debug information without doing anything
-      -s, --table-style <TABLE_STYLE>  Output table style [default: utf8] [possible values: ascii, markdown, none, utf8]
-      -p, --plain                      Whether to use output text to stdout without color
-          --validate-only              Only validate versions file
-      -h, --help                       Print help
+      -V, --versions <PATH>       Path to the versions file [default: versions.toml]
+      -C, --no-commit-logs        Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
+          --debug                 Output debug information without doing anything
+      -s, --table-style <STRING>  Output table style [default: utf8] [possible values: ascii, markdown, none, utf8]
+      -p, --plain                 Whether to use output text to stdout without color
+          --validate-only         Only validate versions file
+      -f, --filter <REGEX>        Regex to use for filtering apps
+      -h, --help                  Print help
 
     ----- stderr -----
     ");
 }
 
 #[test]
-fn debug_flag_works() {
+fn debug_flag_works_for_defaults() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd(["run", "--debug"]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    DEBUG INFO
+
+    command:                              Run
+    versions file:                        versions.toml
+    don't show commit logs:               false
+    table style:                          utf8
+    plain output:                         false
+    only validate versions file:          false
+    app filter:                           <NOT PROVIDED>
+
+    ----- stderr -----
+    ");
+}
+
+#[test]
+fn debug_flag_works_with_overridden_flags() {
     // GIVEN
     let fx = Fixture::new();
     let mut cmd = fx.cmd([
         "run",
         "--debug",
+        "--filter",
+        "repo",
+        "--plain",
+        "--table-style",
+        "ascii",
         "--versions",
         "tests/assets/valid-versions.toml",
     ]);
@@ -58,9 +90,10 @@ fn debug_flag_works() {
     command:                              Run
     versions file:                        tests/assets/valid-versions.toml
     don't show commit logs:               false
-    table style:                          utf8
-    plain output:                         false
+    table style:                          ascii
+    plain output:                         true
     only validate versions file:          false
+    app filter:                           repo
 
     ----- stderr -----
     ");
@@ -170,7 +203,7 @@ fn fails_if_provided_with_invalid_versions_file() {
     ----- stdout -----
 
     ----- stderr -----
-    Error: couldn't parse file "tests/assets/invalid-versions.toml"
+    Error: couldn't get versions from file "tests/assets/invalid-versions.toml"
 
     Caused by:
         TOML parse error at line 1, column 8
@@ -200,7 +233,7 @@ fn validating_invalid_versions_file_fails() {
     ----- stdout -----
 
     ----- stderr -----
-    Error: couldn't parse file "tests/assets/invalid-versions.toml"
+    Error: couldn't get versions from file "tests/assets/invalid-versions.toml"
 
     Caused by:
         TOML parse error at line 1, column 8
@@ -208,5 +241,60 @@ fn validating_invalid_versions_file_fails() {
         1 | envs = "dev"
           |        ^^^^^
         invalid type: string "dev", expected a sequence
+    "#);
+}
+
+#[test]
+fn fails_if_provided_invalid_regex() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd([
+        "run",
+        "--filter",
+        "(invalid|",
+        "--versions",
+        "tests/assets/invalid-versions.toml",
+    ]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: invalid regex pattern provided
+
+    Caused by:
+        regex parse error:
+            (invalid|
+            ^
+        error: unclosed group
+    ");
+}
+
+#[test]
+fn fails_if_no_versions_defined() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd(["run", "--versions", "tests/assets/no-versions.toml"]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r#"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: couldn't get versions from file "tests/assets/no-versions.toml"
+
+    Caused by:
+        TOML parse error at line 1, column 1
+          |
+        1 | envs = ["dev", "prod"]
+          | ^
+        missing field `versions`
     "#);
 }

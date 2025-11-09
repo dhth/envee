@@ -3,6 +3,8 @@ use std::path::PathBuf;
 
 use crate::config::TableStyle;
 
+const NOT_PROVIDED: &str = "<NOT PROVIDED>";
+
 /// envee compares application versions across environments and shows the commits between them
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -30,7 +32,7 @@ pub enum EnveeCommand {
         #[arg(long = "no-commit-logs", short = 'C')]
         no_commit_logs: bool,
         /// Output table style
-        #[arg(long = "table-style", short='s', default_value_t = TableStyle::Utf8)]
+        #[arg(long = "table-style", short='s', default_value_t = TableStyle::Utf8, value_name="STRING")]
         table_style: TableStyle,
         /// Whether to use output text to stdout without color
         #[arg(long = "plain", short = 'p')]
@@ -38,6 +40,9 @@ pub enum EnveeCommand {
         /// Only validate versions file
         #[arg(long = "validate-only")]
         only_validate_versions: bool,
+        /// Regex to use for filtering apps
+        #[arg(long = "filter", short = 'f', value_name = "REGEX")]
+        app_filter: Option<String>,
     },
 }
 
@@ -49,7 +54,8 @@ impl std::fmt::Display for Args {
                 no_commit_logs,
                 table_style,
                 plain_output,
-                only_validate_versions: validate_only,
+                only_validate_versions,
+                app_filter,
             } => format!(
                 r#"
 command:                              Run
@@ -58,12 +64,14 @@ don't show commit logs:               {}
 table style:                          {}
 plain output:                         {}
 only validate versions file:          {}
+app filter:                           {}
 "#,
                 versions_file_path.to_string_lossy(),
                 no_commit_logs,
                 table_style,
                 plain_output,
-                validate_only,
+                only_validate_versions,
+                app_filter.as_deref().unwrap_or(NOT_PROVIDED),
             ),
         };
 
