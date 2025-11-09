@@ -1,18 +1,17 @@
 use super::date::get_humanized_date;
 use crate::domain::CommitLog;
 use chrono::{DateTime, Utc};
-use colored::*;
 use comfy_table::{Cell, Color as TableColor, Table, presets};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
-const AUTHOR_COLOR_POOL: [Color; 6] = [
-    Color::Blue,
-    Color::BrightBlue,
-    Color::BrightCyan,
-    Color::BrightMagenta,
-    Color::Cyan,
-    Color::Magenta,
+const AUTHOR_COLOR_POOL: [TableColor; 6] = [
+    TableColor::Blue,
+    TableColor::Cyan,
+    TableColor::DarkBlue,
+    TableColor::DarkCyan,
+    TableColor::Green,
+    TableColor::Magenta,
 ];
 
 const COMMIT_MESSAGE_MAX_LENGTH: usize = 80;
@@ -55,10 +54,10 @@ pub fn get_commit_logs(
             } else {
                 let author_color = get_author_color(&commit.commit.author.name);
                 table.add_row(vec![
-                    Cell::new(short_sha).fg(TableColor::DarkGrey),
+                    Cell::new(short_sha).fg(TableColor::Grey),
                     Cell::new(&truncated_message),
                     Cell::new(&relative_time).fg(TableColor::Yellow),
-                    Cell::new(&commit.commit.author.name).fg(map_to_table_color(author_color)),
+                    Cell::new(&commit.commit.author.name).fg(author_color),
                 ]);
             }
         }
@@ -74,7 +73,7 @@ pub fn get_commit_logs(
     output
 }
 
-fn get_author_color(author_name: &str) -> Color {
+fn get_author_color(author_name: &str) -> TableColor {
     let mut hasher = DefaultHasher::new();
     author_name.hash(&mut hasher);
     let hash = hasher.finish();
@@ -88,18 +87,6 @@ fn truncate_message(message: &str, max_len: usize) -> String {
         message.to_string()
     } else {
         format!("{}...", &message[..max_len - 3])
-    }
-}
-
-fn map_to_table_color(color: Color) -> TableColor {
-    match color {
-        Color::Blue => TableColor::Blue,
-        Color::BrightBlue => TableColor::Blue,
-        Color::BrightCyan => TableColor::Cyan,
-        Color::BrightMagenta => TableColor::Magenta,
-        Color::Cyan => TableColor::Cyan,
-        Color::Magenta => TableColor::Magenta,
-        _ => TableColor::White,
     }
 }
 
@@ -237,7 +224,7 @@ mod tests {
         // WHEN
         let mut set = HashSet::new();
         for _ in 1..=100 {
-            set.insert(get_author_color(author).to_bg_str());
+            set.insert(get_author_color(author));
         }
 
         // THEN
