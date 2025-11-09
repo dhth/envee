@@ -24,12 +24,13 @@ fn shows_help() {
     Usage: envee run [OPTIONS]
 
     Options:
-      -V, --versions <PATH>  Path to the versions file [default: versions.toml]
-      -C, --no-commit-logs   Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
-          --debug            Output debug information without doing anything
-      -p, --plain            Whether to use output text to stdout without color
-          --validate-only    Only validate versions file
-      -h, --help             Print help
+      -V, --versions <PATH>            Path to the versions file [default: versions.toml]
+      -C, --no-commit-logs             Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
+          --debug                      Output debug information without doing anything
+      -s, --table-style <TABLE_STYLE>  Output table style [default: utf8] [possible values: ascii, markdown, none, utf8]
+      -p, --plain                      Whether to use output text to stdout without color
+          --validate-only              Only validate versions file
+      -h, --help                       Print help
 
     ----- stderr -----
     ");
@@ -57,6 +58,7 @@ fn debug_flag_works() {
     command:                              Run
     versions file:                        tests/assets/valid-versions.toml
     don't show commit logs:               false
+    table style:                          utf8
     plain output:                         false
     only validate versions file:          false
 
@@ -82,10 +84,13 @@ fn works_for_valid_versions_file() {
     success: true
     exit_code: 0
     ----- stdout -----
-    app     dev    prod   in-sync 
-    repo-a  0.1.0  0.1.0  YES     
-    repo-b  1.2.0  1.0.0  NO      
-    repo-c  2.0.0  1.9.0  NO      
+    ┌───────┬───────┬───────┬─────────┐
+    │app    ┆ dev   ┆ prod  ┆ in-sync │
+    ╞═══════╪═══════╪═══════╪═════════╡
+    │repo-a ┆ 0.1.0 ┆ 0.1.0 ┆ YES     │
+    │repo-b ┆ 1.2.0 ┆ 1.0.0 ┆ NO      │
+    │repo-c ┆ 2.0.0 ┆ 1.9.0 ┆ NO      │
+    └───────┴───────┴───────┴─────────┘
 
     ----- stderr -----
     ");

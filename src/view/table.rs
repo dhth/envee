@@ -1,13 +1,15 @@
-use crate::config::{StdoutConfig, TablePreset};
+use crate::config::{StdoutConfig, TableStyle};
 use crate::domain::DiffResult;
 use comfy_table::{Cell, Color, Table, presets};
 
 pub fn render_results_table(result: DiffResult, config: &StdoutConfig) -> String {
     let mut table = Table::new();
 
-    match config.table_preset {
-        TablePreset::Nothing => table.load_preset(presets::NOTHING),
-        TablePreset::AsciiFull => table.load_preset(presets::ASCII_FULL),
+    match config.table_style {
+        TableStyle::Ascii => table.load_preset(presets::ASCII_FULL_CONDENSED),
+        TableStyle::Markdown => table.load_preset(presets::ASCII_MARKDOWN),
+        TableStyle::None => table.load_preset(presets::NOTHING),
+        TableStyle::Utf8 => table.load_preset(presets::UTF8_FULL_CONDENSED),
     };
 
     let mut header = vec!["app".to_string()];
@@ -60,11 +62,59 @@ mod tests {
     use std::collections::HashMap;
 
     #[test]
-    fn table_is_rendered_correctly_with_preset_nothing() {
+    fn table_is_rendered_correctly_with_style_ascii() {
         // GIVEN
         let result = create_test_diff_result();
         let config = StdoutConfig {
-            table_preset: TablePreset::Nothing,
+            table_style: TableStyle::Ascii,
+            plain_output: true,
+        };
+
+        // WHEN
+        let output = render_results_table(result, &config);
+
+        // THEN
+        insta::assert_snapshot!(output, @r"
+        +-----+-------+---------+-------+---------+
+        |app  | qa    | staging | prod  | in-sync |
+        +=========================================+
+        |app1 | 1.0.0 | 1.0.0   | 1.0.0 | YES     |
+        |app2 | 2.0.0 | 2.0.0   | 1.9.0 | NO      |
+        |app3 | 0.1.0 | 0.1.0   |       | YES     |
+        |app4 | 0.1.0 |         |       | YES     |
+        +-----+-------+---------+-------+---------+
+        ");
+    }
+
+    #[test]
+    fn table_is_rendered_correctly_with_style_markdown() {
+        // GIVEN
+        let result = create_test_diff_result();
+        let config = StdoutConfig {
+            table_style: TableStyle::Markdown,
+            plain_output: true,
+        };
+
+        // WHEN
+        let output = render_results_table(result, &config);
+
+        // THEN
+        insta::assert_snapshot!(output, @r"
+        |app  | qa    | staging | prod  | in-sync |
+        |-----|-------|---------|-------|---------|
+        |app1 | 1.0.0 | 1.0.0   | 1.0.0 | YES     |
+        |app2 | 2.0.0 | 2.0.0   | 1.9.0 | NO      |
+        |app3 | 0.1.0 | 0.1.0   |       | YES     |
+        |app4 | 0.1.0 |         |       | YES     |
+        ");
+    }
+
+    #[test]
+    fn table_is_rendered_correctly_with_style_none() {
+        // GIVEN
+        let result = create_test_diff_result();
+        let config = StdoutConfig {
+            table_style: TableStyle::None,
             plain_output: true,
         };
 
@@ -82,11 +132,11 @@ mod tests {
     }
 
     #[test]
-    fn table_is_rendered_correctly_with_preset_asciifull() {
+    fn table_is_rendered_correctly_with_style_utf8() {
         // GIVEN
         let result = create_test_diff_result();
         let config = StdoutConfig {
-            table_preset: TablePreset::AsciiFull,
+            table_style: TableStyle::Utf8,
             plain_output: true,
         };
 
@@ -95,17 +145,14 @@ mod tests {
 
         // THEN
         insta::assert_snapshot!(output, @r"
-        +-----+-------+---------+-------+---------+
-        |app  | qa    | staging | prod  | in-sync |
-        +=========================================+
-        |app1 | 1.0.0 | 1.0.0   | 1.0.0 | YES     |
-        |-----+-------+---------+-------+---------|
-        |app2 | 2.0.0 | 2.0.0   | 1.9.0 | NO      |
-        |-----+-------+---------+-------+---------|
-        |app3 | 0.1.0 | 0.1.0   |       | YES     |
-        |-----+-------+---------+-------+---------|
-        |app4 | 0.1.0 |         |       | YES     |
-        +-----+-------+---------+-------+---------+
+        ┌─────┬───────┬─────────┬───────┬─────────┐
+        │app  ┆ qa    ┆ staging ┆ prod  ┆ in-sync │
+        ╞═════╪═══════╪═════════╪═══════╪═════════╡
+        │app1 ┆ 1.0.0 ┆ 1.0.0   ┆ 1.0.0 ┆ YES     │
+        │app2 ┆ 2.0.0 ┆ 2.0.0   ┆ 1.9.0 ┆ NO      │
+        │app3 ┆ 0.1.0 ┆ 0.1.0   ┆       ┆ YES     │
+        │app4 ┆ 0.1.0 ┆         ┆       ┆ YES     │
+        └─────┴───────┴─────────┴───────┴─────────┘
         ");
     }
 
