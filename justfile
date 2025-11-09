@@ -53,10 +53,10 @@ review:
     cargo insta test --review
 
 test:
-    cargo nextest run
+    cargo nextest run --show-progress none
 
 all:
     cargo check --all-targets
     cargo fmt --all
     cargo clippy --all-targets
-    cargo nextest run
+    cargo nextest run --show-progress none

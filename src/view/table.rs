@@ -13,7 +13,7 @@ pub fn render_results_table(result: DiffResult, config: &StdoutConfig) -> String
     };
 
     let mut header = vec!["app".to_string()];
-    header.extend(result.envs.iter().cloned());
+    header.extend(result.envs.iter().map(|e| e.to_string()));
     header.push("in-sync".to_string());
     table.set_header(header);
 
@@ -24,7 +24,7 @@ pub fn render_results_table(result: DiffResult, config: &StdoutConfig) -> String
             let mut cells = vec![Cell::new(&row.app).fg(Color::Red)];
 
             for env in &result.envs {
-                let version = row.values.get(env).map(|v| v.as_str()).unwrap_or("");
+                let version = row.values.get(env).map(|v| v.as_ref()).unwrap_or("");
                 cells.push(Cell::new(version).fg(Color::Red));
             }
 
@@ -33,10 +33,10 @@ pub fn render_results_table(result: DiffResult, config: &StdoutConfig) -> String
 
             table.add_row(cells);
         } else {
-            let mut cells = vec![row.app.clone()];
+            let mut cells = vec![row.app.to_string()];
 
             for env in &result.envs {
-                let version = row.values.get(env).map(|v| v.as_str()).unwrap_or("");
+                let version = row.values.get(env).map(|v| v.as_ref()).unwrap_or("");
                 cells.push(version.to_string());
             }
 
@@ -158,45 +158,45 @@ mod tests {
 
     fn create_test_diff_result() -> DiffResult {
         let mut app1_values = HashMap::new();
-        app1_values.insert("qa".to_string(), "1.0.0".to_string());
-        app1_values.insert("staging".to_string(), "1.0.0".to_string());
-        app1_values.insert("prod".to_string(), "1.0.0".to_string());
+        app1_values.insert("qa".into(), "1.0.0".into());
+        app1_values.insert("staging".into(), "1.0.0".into());
+        app1_values.insert("prod".into(), "1.0.0".into());
 
         let mut app2_values = HashMap::new();
-        app2_values.insert("qa".to_string(), "2.0.0".to_string());
-        app2_values.insert("staging".to_string(), "2.0.0".to_string());
-        app2_values.insert("prod".to_string(), "1.9.0".to_string());
+        app2_values.insert("qa".into(), "2.0.0".into());
+        app2_values.insert("staging".into(), "2.0.0".into());
+        app2_values.insert("prod".into(), "1.9.0".into());
 
         let mut app3_values = HashMap::new();
-        app3_values.insert("qa".to_string(), "0.1.0".to_string());
-        app3_values.insert("staging".to_string(), "0.1.0".to_string());
+        app3_values.insert("qa".into(), "0.1.0".into());
+        app3_values.insert("staging".into(), "0.1.0".into());
 
         let mut app4_values = HashMap::new();
-        app4_values.insert("qa".to_string(), "0.1.0".to_string());
+        app4_values.insert("qa".into(), "0.1.0".into());
 
         DiffResult {
             envs: vec!["qa", "staging", "prod"]
                 .into_iter()
-                .map(String::from)
+                .map(Into::into)
                 .collect(),
             app_results: vec![
                 AppResult {
-                    app: "app1".to_string(),
+                    app: "app1".into(),
                     values: app1_values,
                     in_sync: true,
                 },
                 AppResult {
-                    app: "app2".to_string(),
+                    app: "app2".into(),
                     values: app2_values,
                     in_sync: false,
                 },
                 AppResult {
-                    app: "app3".to_string(),
+                    app: "app3".into(),
                     values: app3_values,
                     in_sync: true,
                 },
                 AppResult {
-                    app: "app4".to_string(),
+                    app: "app4".into(),
                     values: app4_values,
                     in_sync: true,
                 },

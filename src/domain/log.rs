@@ -1,8 +1,8 @@
 use super::{App, Env, Version};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct CommitLog {
     pub app: App,
     pub from_env: Env,
@@ -12,21 +12,20 @@ pub struct CommitLog {
     pub commits: Vec<Commit>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Commit {
     pub sha: String,
     pub commit: CommitDetail,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct CommitDetail {
     pub message: String,
     pub author: Author,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Author {
     pub name: String,
-    pub email: String,
     pub date: DateTime<Utc>,
 }

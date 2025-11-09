@@ -1,0 +1,18 @@
+envs = ["unknown"]
+github_org = ""
+git_tag_transform = "v{version}}"
+
+[[versions]]
+app = ""
+env = ""
+version = ""
+
+[[versions]]
+app = "valid-app"
+env = "dev"
+version = "1.0.0"
+
+[[versions]]
+app = ""
+env = "prod"
+version = ""

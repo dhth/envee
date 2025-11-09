@@ -48,18 +48,17 @@ mod tests {
         let reference = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
 
         let log1 = CommitLog {
-            app: "app-one".to_string(),
-            from_env: "prod".to_string(),
-            to_env: "dev".to_string(),
-            from_version: "1.0.0".to_string(),
-            to_version: "1.1.0".to_string(),
+            app: "app-one".into(),
+            from_env: "prod".into(),
+            to_env: "dev".into(),
+            from_version: "1.0.0".into(),
+            to_version: "1.1.0".into(),
             commits: vec![Commit {
                 sha: "abc1234567890".to_string(),
                 commit: CommitDetail {
                     message: "First commit".to_string(),
                     author: Author {
                         name: "User A".to_string(),
-                        email: "12345+user-a@users.noreply.github.com".to_string(),
                         date: Utc.with_ymd_and_hms(2025, 1, 15, 10, 0, 0).unwrap(),
                     },
                 },
@@ -67,11 +66,11 @@ mod tests {
         };
 
         let log2 = CommitLog {
-            app: "app-two".to_string(),
-            from_env: "prod".to_string(),
-            to_env: "dev".to_string(),
-            from_version: "2.0.0".to_string(),
-            to_version: "2.1.0".to_string(),
+            app: "app-two".into(),
+            from_env: "prod".into(),
+            to_env: "dev".into(),
+            from_version: "2.0.0".into(),
+            to_version: "2.1.0".into(),
             commits: vec![
                 Commit {
                     sha: "xyz9876543210".to_string(),
@@ -79,7 +78,6 @@ mod tests {
                         message: "Second commit".to_string(),
                         author: Author {
                             name: "User A".to_string(),
-                            email: "12345+user-a@users.noreply.github.com".to_string(),
                             date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 0, 0).unwrap(),
                         },
                     },
@@ -90,7 +88,6 @@ mod tests {
                         message: "First commit".to_string(),
                         author: Author {
                             name: "User B".to_string(),
-                            email: "12346+user-b@users.noreply.github.com".to_string(),
                             date: Utc.with_ymd_and_hms(2025, 1, 15, 10, 0, 0).unwrap(),
                         },
                     },
