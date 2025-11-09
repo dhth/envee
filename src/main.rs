@@ -9,7 +9,7 @@ use anyhow::Context;
 use args::Args;
 use chrono::Utc;
 use clap::Parser;
-use config::{Config, OutputType, TablePreset};
+use config::{Config, OutputType};
 use domain::Versions;
 use std::{env::VarError, path::Path};
 
@@ -28,6 +28,7 @@ async fn main() -> anyhow::Result<()> {
         args::EnveeCommand::Run {
             versions_file_path,
             no_commit_logs,
+            table_style,
             plain_output,
             only_validate_versions,
         } => {
@@ -54,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
 
             let config = Config {
                 output_type: OutputType::Stdout(StdoutConfig {
-                    table_preset: TablePreset::Nothing,
+                    table_style,
                     plain_output,
                 }),
             };

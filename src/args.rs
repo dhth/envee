@@ -1,6 +1,8 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+use crate::config::TableStyle;
+
 /// envee compares application versions across environments and shows the commits between them
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -27,6 +29,9 @@ pub enum EnveeCommand {
         /// Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
         #[arg(long = "no-commit-logs", short = 'C')]
         no_commit_logs: bool,
+        /// Output table style
+        #[arg(long = "table-style", short='s', default_value_t = TableStyle::Utf8)]
+        table_style: TableStyle,
         /// Whether to use output text to stdout without color
         #[arg(long = "plain", short = 'p')]
         plain_output: bool,
@@ -42,6 +47,7 @@ impl std::fmt::Display for Args {
             EnveeCommand::Run {
                 versions_file_path,
                 no_commit_logs,
+                table_style,
                 plain_output,
                 only_validate_versions: validate_only,
             } => format!(
@@ -49,11 +55,13 @@ impl std::fmt::Display for Args {
 command:                              Run
 versions file:                        {}
 don't show commit logs:               {}
+table style:                          {}
 plain output:                         {}
 only validate versions file:          {}
 "#,
                 versions_file_path.to_string_lossy(),
                 no_commit_logs,
+                table_style,
                 plain_output,
                 validate_only,
             ),
