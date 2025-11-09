@@ -1,4 +1,6 @@
-use crate::domain::{Commit, CommitLog, DiffResult, Versions};
+use crate::domain::{
+    App, Commit, CommitLog, DiffResult, Env, GitTagTransform, GithubOrg, Version, Versions,
+};
 use anyhow::Context;
 use futures::stream::{FuturesUnordered, StreamExt};
 use serde::Deserialize;
@@ -8,14 +10,14 @@ use tokio::sync::Semaphore;
 const MAX_CONCURRENT_FETCHES: usize = 20;
 
 pub struct FetchCommitLogParams {
-    pub github_org: String,
-    pub app: String,
-    pub from_env: String,
-    pub to_env: String,
-    pub from_version: String,
-    pub to_version: String,
+    pub github_org: GithubOrg,
+    pub app: App,
+    pub from_env: Env,
+    pub to_env: Env,
+    pub from_version: Version,
+    pub to_version: Version,
     pub token: String,
-    pub tag_transform: Option<String>,
+    pub tag_transform: Option<GitTagTransform>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -97,18 +99,18 @@ pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<Co
     let base_tag = if let Some(ref template) = params.tag_transform {
         build_tag(template, &params.from_version)
     } else {
-        params.from_version.clone()
+        params.from_version.to_string()
     };
 
     let head_tag = if let Some(ref template) = params.tag_transform {
         build_tag(template, &params.to_version)
     } else {
-        params.to_version.clone()
+        params.to_version.to_string()
     };
 
     let url = format!(
         "https://api.github.com/repos/{}/{}/compare/{}...{}",
-        params.github_org, params.app, base_tag, head_tag
+        &params.github_org, &params.app, base_tag, head_tag
     );
 
     let client = reqwest::Client::builder()

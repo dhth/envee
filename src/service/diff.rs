@@ -46,32 +46,32 @@ mod tests {
     #[test]
     fn diff_result_is_computed_correctly() {
         // GIVEN
-        let envs = vec!["dev".to_string(), "prod".to_string()];
+        let envs = vec!["dev".into(), "prod".into()];
         let versions = vec![
             AppVersion {
-                app: "app1".to_string(),
-                env: "dev".to_string(),
-                version: "1.0.0".to_string(),
+                app: "app1".into(),
+                env: "dev".into(),
+                version: "1.0.0".into(),
             },
             AppVersion {
-                app: "app1".to_string(),
-                env: "prod".to_string(),
-                version: "1.0.0".to_string(),
+                app: "app1".into(),
+                env: "prod".into(),
+                version: "1.0.0".into(),
             },
             AppVersion {
-                app: "app2".to_string(),
-                env: "dev".to_string(),
-                version: "2.0.0".to_string(),
+                app: "app2".into(),
+                env: "dev".into(),
+                version: "2.0.0".into(),
             },
             AppVersion {
-                app: "app2".to_string(),
-                env: "prod".to_string(),
-                version: "1.9.0".to_string(),
+                app: "app2".into(),
+                env: "prod".into(),
+                version: "1.9.0".into(),
             },
             AppVersion {
-                app: "app3".to_string(),
-                env: "dev".to_string(),
-                version: "0.1.0".to_string(),
+                app: "app3".into(),
+                env: "dev".into(),
+                version: "0.1.0".into(),
             },
         ];
 
@@ -108,22 +108,22 @@ mod tests {
     #[test]
     fn envs_not_specified_are_not_considered() {
         // GIVEN
-        let envs = vec!["dev".to_string(), "prod".to_string()];
+        let envs = vec!["dev".into(), "prod".into()];
         let versions = vec![
             AppVersion {
-                app: "app1".to_string(),
-                env: "dev".to_string(),
-                version: "1.0.0".to_string(),
+                app: "app1".into(),
+                env: "dev".into(),
+                version: "1.0.0".into(),
             },
             AppVersion {
-                app: "app1".to_string(),
-                env: "prod".to_string(),
-                version: "1.0.0".to_string(),
+                app: "app1".into(),
+                env: "prod".into(),
+                version: "1.0.0".into(),
             },
             AppVersion {
-                app: "app1".to_string(),
-                env: "other".to_string(),
-                version: "2.0.0".to_string(),
+                app: "app1".into(),
+                env: "other".into(),
+                version: "2.0.0".into(),
             },
         ];
 

@@ -184,7 +184,7 @@ fn fails_if_provided_with_absent_versions_file() {
 }
 
 #[test]
-fn fails_if_provided_with_invalid_versions_file() {
+fn fails_if_provided_with_invalid_versions_schema() {
     // GIVEN
     let fx = Fixture::new();
     let mut cmd = fx.cmd([
@@ -192,7 +192,7 @@ fn fails_if_provided_with_invalid_versions_file() {
         "--no-commit-logs",
         "--plain",
         "--versions",
-        "tests/assets/invalid-versions.toml",
+        "tests/assets/invalid-schema.toml",
     ]);
 
     // WHEN
@@ -203,7 +203,7 @@ fn fails_if_provided_with_invalid_versions_file() {
     ----- stdout -----
 
     ----- stderr -----
-    Error: couldn't get versions from file "tests/assets/invalid-versions.toml"
+    Error: couldn't get versions from file "tests/assets/invalid-schema.toml"
 
     Caused by:
         TOML parse error at line 1, column 8
@@ -215,15 +215,15 @@ fn fails_if_provided_with_invalid_versions_file() {
 }
 
 #[test]
-fn validating_invalid_versions_file_fails() {
+fn fails_if_provided_with_invalid_versions_data() {
     // GIVEN
     let fx = Fixture::new();
     let mut cmd = fx.cmd([
         "run",
         "--no-commit-logs",
-        "--validate-only",
+        "--plain",
         "--versions",
-        "tests/assets/invalid-versions.toml",
+        "tests/assets/invalid-data.toml",
     ]);
 
     // WHEN
@@ -234,7 +234,45 @@ fn validating_invalid_versions_file_fails() {
     ----- stdout -----
 
     ----- stderr -----
-    Error: couldn't get versions from file "tests/assets/invalid-versions.toml"
+    Error: couldn't get versions from file "tests/assets/invalid-data.toml"
+
+    Caused by:
+        versions config has errors:
+         - envs array has only 1 element, need at least 2
+         - env "unknown" is not present in any of the versions configured
+         - github_org is empty
+         - git_tag_transform doesn't include the placeholder "{{version}}"
+         - version #0 has errors:
+           - app is empty
+           - env is empty
+           - version is empty
+         - version #2 has errors:
+           - app is empty
+           - version is empty
+    "#);
+}
+
+#[test]
+fn validating_invalid_versions_schema_fails() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd([
+        "run",
+        "--no-commit-logs",
+        "--validate-only",
+        "--versions",
+        "tests/assets/invalid-schema.toml",
+    ]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r#"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: couldn't get versions from file "tests/assets/invalid-schema.toml"
 
     Caused by:
         TOML parse error at line 1, column 8
@@ -255,7 +293,7 @@ fn fails_if_provided_invalid_regex() {
         "(invalid|",
         "--no-commit-logs",
         "--versions",
-        "tests/assets/invalid-versions.toml",
+        "tests/assets/valid-versions.toml",
     ]);
 
     // WHEN

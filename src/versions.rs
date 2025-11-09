@@ -1,4 +1,4 @@
-use crate::domain::Versions;
+use crate::domain::{RawVersions, Versions};
 use anyhow::Context;
 use regex::Regex;
 use std::path::Path;
@@ -24,19 +24,21 @@ where
     Ok(versions)
 }
 
-pub(crate) fn get_versions<S>(contents: S, app_filter: Option<&Regex>) -> anyhow::Result<Versions>
+pub fn get_versions<S>(contents: S, app_filter: Option<&Regex>) -> anyhow::Result<Versions>
 where
     S: AsRef<str>,
 {
-    let mut versions: Versions = toml::from_str(contents.as_ref())?;
+    let mut raw: RawVersions = toml::from_str(contents.as_ref())?;
 
     if let Some(regex) = app_filter {
-        versions.versions.retain(|v| regex.is_match(&v.app));
+        raw.versions.retain(|v| regex.is_match(&v.app));
 
-        if versions.versions.is_empty() {
+        if raw.versions.is_empty() {
             anyhow::bail!("no versions match the provided filter");
         }
     }
+
+    let versions: Versions = raw.try_into()?;
 
     Ok(versions)
 }
@@ -235,5 +237,49 @@ github_org = "dhth"
 
         // THEN
         insta::assert_snapshot!(error.to_string(), @"no versions match the provided filter");
+    }
+
+    #[test]
+    fn parsing_versions_with_invalid_data_fails() {
+        // GIVEN
+        let contents = r#"
+envs = ["unknown"]
+github_org = ""
+git_tag_transform = "v{version}}"
+
+[[versions]]
+app = ""
+env = ""
+version = ""
+
+[[versions]]
+app = "valid-app"
+env = "dev"
+version = "1.0.0"
+
+[[versions]]
+app = ""
+env = "prod"
+version = ""
+"#;
+
+        // WHEN
+        let error = get_versions(contents, None).expect_err("result should've been an error");
+
+        // THEN
+        insta::assert_snapshot!(error.to_string(), @r#"
+        versions config has errors:
+         - envs array has only 1 element, need at least 2
+         - env "unknown" is not present in any of the versions configured
+         - github_org is empty
+         - git_tag_transform doesn't include the placeholder "{{version}}"
+         - version #0 has errors:
+           - app is empty
+           - env is empty
+           - version is empty
+         - version #2 has errors:
+           - app is empty
+           - version is empty
+        "#);
     }
 }
