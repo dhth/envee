@@ -220,6 +220,7 @@ fn validating_invalid_versions_file_fails() {
     let fx = Fixture::new();
     let mut cmd = fx.cmd([
         "run",
+        "--no-commit-logs",
         "--validate-only",
         "--versions",
         "tests/assets/invalid-versions.toml",
@@ -252,6 +253,7 @@ fn fails_if_provided_invalid_regex() {
         "run",
         "--filter",
         "(invalid|",
+        "--no-commit-logs",
         "--versions",
         "tests/assets/invalid-versions.toml",
     ]);
@@ -278,7 +280,12 @@ fn fails_if_provided_invalid_regex() {
 fn fails_if_no_versions_defined() {
     // GIVEN
     let fx = Fixture::new();
-    let mut cmd = fx.cmd(["run", "--versions", "tests/assets/no-versions.toml"]);
+    let mut cmd = fx.cmd([
+        "run",
+        "--no-commit-logs",
+        "--versions",
+        "tests/assets/no-versions.toml",
+    ]);
 
     // WHEN
     // THEN
@@ -297,4 +304,22 @@ fn fails_if_no_versions_defined() {
           | ^
         missing field `versions`
     "#);
+}
+
+#[test]
+fn fails_if_no_gh_token_is_provided() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd(["run", "--versions", "tests/assets/valid-versions.toml"]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: ENVEE_GH_TOKEN needs to be set to fetch commit logs from GitHub
+    ");
 }
