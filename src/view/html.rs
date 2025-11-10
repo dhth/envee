@@ -186,7 +186,7 @@ mod tests {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
             <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACN0lEQVR4AUxSO2tUURD+5kpWd0EtgkSFJYogu3/AQlubRdNaqbGIyhYahGAgBOIzoAY0gkYlCxHEQhAkwQcWChYShETEIojGTeGzSJAUPlI4+b65d7M5nDnzzeubOffcpFQq+WopZ3ZDl8qMSzK/csuZLZ0YshXA4JnpCEdqOZVlNrW7RdTpTyiMNraDcViYHucqRtqMqIpIUTNDgsaih2E42QkhFuNh0NIZXhpN7O5NApKtBIUre3fhxrVTuFfrx9m+TmzZ3AqYSCSESFc6AUnllrApjhzch8sXqtjUuhGfZr9gf2U37lzvwZokTVcOB4V0eJrEjvzaHKpdHZhfWMShoxcxMDiGJ88n0d7ehp07iogVnYRMV2B7bmRr+7atyK/LYcP6Ap49GsLkyxF0VPaoGXK5lsgynSSx9BsQyaEURnR/53z1ue/o7b+Jkz3D6DoxhM5jl/B+ZlZZfJg0UZXN/0Ak9NTnfuDf0hKKxTZ8/TaPN1MfMDU9g4Vfi/D/YDETeWd1J0L8B6wj9mD//ecvancf8xoteHj/HMZu9WL8wSCunD8OPRt7MzclEs4mEJSfmvt2bRx9Z0bx9t1HFAp5fK7/xMjoRDRwpUmYJxwTkDqC4jXe32lNPH2NavdVHDg8gO7Tw3jxajodn8XKCYMkfEaeLHAGPNNUiI9p8jAgo4FpelQTwPSMADXFQqVTMMURSyo+WExGl1G4Q7mLgCkEukYUM+KkopIJNXcWhEHNQYAIItYyAAAA//8sM7n7AAAABklEQVQDAO2/0Ju6kMR1AAAAAElFTkSuQmCC">
             <title>versions</title>
             <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -299,7 +299,7 @@ mod tests {
                   </details>
                 </div>
               </div>
-              <p class="text-[#928374] italic my-10 pt-2 border-t-2 border-[#928374] border-opacity-20">Built using <a class="font-bold" href="https://github.com/dhth/envee" target="_blank">envee</a></p>
+              <p class="text-[#928374] italic my-10 pt-2 border-t-2 border-[#92837433]">Built using <a class="font-bold" href="https://github.com/dhth/envee" target="_blank">envee</a></p>
             </div>
             <button id="scrollToTop" onclick="window.scrollTo({top: 0, behavior: 'instant'});"
               class="hidden fixed bottom-4 left-4 z-50 bg-[#928374] text-[#282828] px-4 py-2 rounded-full shadow-lg hover:bg-[#d3869b] font-bold transition"
