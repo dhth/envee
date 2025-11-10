@@ -111,6 +111,10 @@ async fn main() -> anyhow::Result<()> {
                     println!("{}", output);
                 }
                 OutputType::Html(html_config) => {
+                    if let Some(parent) = html_config.output_path.parent() {
+                        std::fs::create_dir_all(parent)
+                            .with_context(|| format!("failed to create directory {:?}", parent))?;
+                    }
                     std::fs::write(&html_config.output_path, output).with_context(|| {
                         format!("failed to write HTML to {:?}", html_config.output_path)
                     })?;
