@@ -34,7 +34,7 @@ envs = ["dev", "prod"]
 
 # github owner of the repositories
 # (needed if you want to see commit logs)
-github_org = "radancy-ai"
+github_org = "org"
 
 # if you want to transform the versions in the versions TOML file to git tags
 # eg. v{{version}} will convert 0.1.0 to v0.1.0
