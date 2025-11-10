@@ -203,6 +203,15 @@ mod tests {
               .changes-section {
                 font-family: "Fira Mono", monospace;
               }
+              * {
+                scrollbar-width: thin;
+              }
+              .diff-table {
+                scrollbar-color: #928374 #282828;
+              }
+              .commit-log {
+                scrollbar-color: #928374 #2e2c2c;
+              }
             </style>
           </head>
           <body class="bg-[#282828]">
@@ -211,7 +220,7 @@ mod tests {
                 versions
               </h1>
               <p class="text-[#928374] italic mt-4">Generated at 2025-01-16T12:00:00Z</p>
-              <div class="mt-2 overflow-x-auto">
+              <div class="mt-2 overflow-x-auto diff-table">
                 <table class="table-auto w-full text-right max-sm:text-xs font-semibold whitespace-nowrap">
                   <thead>
                     <tr class="text-[#fbf1c7] bg-[#3c3836]">
@@ -250,7 +259,7 @@ mod tests {
                   Toggle All
                   </button>
                 </div>
-                <div class="my-4 overflow-x-auto">
+                <div class="my-4 overflow-x-auto commit-log">
                   <details>
                     <summary class="text-[#83a598] cursor-pointer max-sm:text-sm">app-one</summary>
                     <div class="mt-2 max-sm:p-2 p-4 bg-[#2e2c2c] changes-section max-sm:text-xs text-sm">
@@ -270,7 +279,7 @@ mod tests {
                     </div>
                   </details>
                 </div>
-                <div class="my-4 overflow-x-auto">
+                <div class="my-4 overflow-x-auto commit-log">
                   <details>
                     <summary class="text-[#83a598] cursor-pointer max-sm:text-sm">app-two</summary>
                     <div class="mt-2 max-sm:p-2 p-4 bg-[#2e2c2c] changes-section max-sm:text-xs text-sm">
