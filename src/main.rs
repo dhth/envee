@@ -71,10 +71,10 @@ async fn main() -> anyhow::Result<()> {
             };
 
             match &config.output_type {
-                OutputType::Stdout(table_config) => {
+                OutputType::Stdout(stdout_config) => {
                     println!(
                         "{}",
-                        view::render_results_table(result.clone(), table_config)
+                        view::render_results_table(result.clone(), stdout_config)
                     );
                 }
             }
@@ -88,7 +88,18 @@ async fn main() -> anyhow::Result<()> {
             let commit_logs = service::fetch_commit_logs(&result, &versions, &token).await;
 
             if !commit_logs.is_empty() {
-                println!("\n{}", view::get_commit_logs(commit_logs, Utc::now()));
+                match &config.output_type {
+                    OutputType::Stdout(stdout_config) => {
+                        println!(
+                            "\n{}",
+                            view::get_commit_logs(
+                                commit_logs,
+                                Utc::now(),
+                                stdout_config.plain_output
+                            )
+                        );
+                    }
+                }
             }
         }
     }

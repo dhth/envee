@@ -377,6 +377,7 @@ fn fails_if_no_gh_token_is_provided() {
     // GIVEN
     let fx = Fixture::new();
     let mut cmd = fx.cmd(["run", "--versions", "tests/assets/valid-versions.toml"]);
+    cmd.env_remove("ENVEE_GH_TOKEN");
 
     // WHEN
     // THEN
