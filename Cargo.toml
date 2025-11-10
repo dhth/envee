@@ -43,6 +43,10 @@ codegen-units = 1
 lto = "fat"
 strip = "symbols"
 
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+
 [lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"
