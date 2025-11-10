@@ -48,16 +48,16 @@ pub fn get_commit_logs(
                 table.add_row(vec![
                     short_sha,
                     &truncated_message,
-                    &relative_time,
                     &commit.commit.author.name,
+                    &relative_time,
                 ]);
             } else {
                 let author_color = get_author_color(&commit.commit.author.name);
                 table.add_row(vec![
                     Cell::new(short_sha).fg(TableColor::Grey),
                     Cell::new(&truncated_message),
-                    Cell::new(&relative_time).fg(TableColor::Yellow),
                     Cell::new(&commit.commit.author.name).fg(author_color),
+                    Cell::new(&relative_time).fg(TableColor::Yellow),
                 ]);
             }
         }
@@ -94,6 +94,7 @@ fn truncate_message(message: &str, max_len: usize) -> String {
 mod tests {
     use std::collections::HashSet;
 
+    use super::super::testdata::get_result_and_commit_logs;
     use super::*;
     use crate::domain::{Author, Commit, CommitDetail};
     use chrono::TimeZone;
@@ -103,78 +104,20 @@ mod tests {
         // GIVEN
         let reference = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
 
-        let log1 = CommitLog {
-            app: "app-one".into(),
-            from_env: "prod".into(),
-            to_env: "dev".into(),
-            from_version: "1.0.0".into(),
-            to_version: "1.1.0".into(),
-            commits: vec![Commit {
-                sha: "abc1234567890".to_string(),
-                commit: CommitDetail {
-                    message: "First commit".to_string(),
-                    author: Author {
-                        name: "User A".to_string(),
-                        date: Utc.with_ymd_and_hms(2025, 1, 15, 10, 0, 0).unwrap(),
-                    },
-                },
-            }],
-        };
-
-        let log2 = CommitLog {
-            app: "app-two".into(),
-            from_env: "prod".into(),
-            to_env: "dev".into(),
-            from_version: "2.0.0".into(),
-            to_version: "2.1.0".into(),
-            commits: vec![
-                Commit {
-                    sha: "1443d43".to_string(),
-                    commit: CommitDetail {
-                        message: "add cli test for when no versions match app filter".to_string(),
-                        author: Author {
-                            name: "User A".to_string(),
-                            date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 30, 0).unwrap(),
-                        },
-                    },
-                },
-                Commit {
-                    sha: "c536d77".to_string(),
-                    commit: CommitDetail {
-                        message: "allow filtering apps to run for (#3) commit".to_string(),
-                        author: Author {
-                            name: "User B".to_string(),
-                            date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 0, 0).unwrap(),
-                        },
-                    },
-                },
-                Commit {
-                    sha: "2ff3e97".to_string(),
-                    commit: CommitDetail {
-                        message: "allow configuring table style (#2) commit".to_string(),
-                        author: Author {
-                            name: "User A".to_string(),
-                            date: Utc.with_ymd_and_hms(2025, 1, 15, 10, 0, 0).unwrap(),
-                        },
-                    },
-                },
-            ],
-        };
-
         // WHEN
-        let result = get_commit_logs(vec![log1, log2], reference, true);
+        let result = get_commit_logs(get_result_and_commit_logs().1, reference, true);
 
         // THEN
         insta::assert_snapshot!(result, @r"
         app-one prod..dev (1.0.0..1.1.0)
 
-         abc1234  First commit  1d ago  User A 
+         ae7de14  First commit  User A  1d ago 
 
         app-two prod..dev (2.0.0..2.1.0)
 
-         1443d43  add cli test for when no versions match app filter  30m ago  User A 
-         c536d77  allow filtering apps to run for (#3) commit         1h ago   User B 
-         2ff3e97  allow configuring table style (#2) commit           1d ago   User A
+         1443d43  add cli test for when no versions match app filter  User A  30m ago 
+         c536d77  allow filtering apps to run for (#3) commit         User B  1h ago  
+         2ff3e97  allow configuring table style (#2) commit           User A  1d ago
         ");
     }
 
@@ -200,8 +143,10 @@ mod tests {
                             date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 30, 0).unwrap(),
                         },
                     },
+                    html_url: "https://github.com/org/app-two/commit/1443d43".to_string(),
                 },
             ],
+            html_url: "https://github.com/org/app-two/compare/2.0.0...2.1.0".to_string(),
         };
 
         // WHEN
@@ -211,7 +156,7 @@ mod tests {
         insta::assert_snapshot!(result, @r"
         app-two prod..dev (2.0.0..2.1.0)
 
-         1443d43  add cli test for when no application versions match app filter (this commit i...  30m ago  User A
+         1443d43  add cli test for when no application versions match app filter (this commit i...  User A  30m ago
         ");
     }
 

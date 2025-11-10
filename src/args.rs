@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-use crate::config::TableStyle;
+use crate::config::{OutputFormat, TableStyle};
 
 const NOT_PROVIDED: &str = "<NOT PROVIDED>";
 
@@ -31,12 +31,28 @@ pub enum EnveeCommand {
         /// Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
         #[arg(long = "no-commit-logs", short = 'C')]
         no_commit_logs: bool,
-        /// Output table style
+        /// Output format
+        #[arg(long = "output-format", short = 'o', default_value_t = OutputFormat::Stdout, value_name = "FORMAT")]
+        output_format: OutputFormat,
+        /// Output table style (for stdout output)
         #[arg(long = "table-style", short='s', default_value_t = TableStyle::Utf8, value_name="STRING")]
         table_style: TableStyle,
         /// Whether to use output text to stdout without color
         #[arg(long = "plain", short = 'p')]
         plain_output: bool,
+        /// Path for the HTML output file
+        #[arg(
+            long = "html-output",
+            value_name = "PATH",
+            default_value = "envee-report.html"
+        )]
+        html_output_path: PathBuf,
+        /// Title for HTML report (for html output)
+        #[arg(long = "html-title", value_name = "STRING", default_value = "envee")]
+        html_title: String,
+        /// Path to custom HTML template file
+        #[arg(long = "html-template", value_name = "PATH")]
+        html_template_path: Option<PathBuf>,
         /// Only validate versions file
         #[arg(long = "validate-only")]
         only_validate_versions: bool,
@@ -52,27 +68,48 @@ impl std::fmt::Display for Args {
             EnveeCommand::Run {
                 versions_file_path,
                 no_commit_logs,
+                output_format,
                 table_style,
                 plain_output,
+                html_output_path,
+                html_title,
+                html_template_path,
                 only_validate_versions,
                 app_filter,
-            } => format!(
-                r#"
+            } => {
+                let output_format_str = match output_format {
+                    OutputFormat::Stdout => "stdout",
+                    OutputFormat::Html => "html",
+                };
+                format!(
+                    r#"
 command:                              Run
 versions file:                        {}
 don't show commit logs:               {}
+output format:                        {}
 table style:                          {}
 plain output:                         {}
+html output path:                     {}
+html title:                           {}
+html template path:                   {}
 only validate versions file:          {}
 app filter:                           {}
 "#,
-                versions_file_path.to_string_lossy(),
-                no_commit_logs,
-                table_style,
-                plain_output,
-                only_validate_versions,
-                app_filter.as_deref().unwrap_or(NOT_PROVIDED),
-            ),
+                    versions_file_path.to_string_lossy(),
+                    no_commit_logs,
+                    output_format_str,
+                    table_style,
+                    plain_output,
+                    html_output_path.to_string_lossy(),
+                    html_title,
+                    html_template_path
+                        .as_ref()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or(NOT_PROVIDED.to_string()),
+                    only_validate_versions,
+                    app_filter.as_deref().unwrap_or(NOT_PROVIDED),
+                )
+            }
         };
 
         f.write_str(&output)

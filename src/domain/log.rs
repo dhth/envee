@@ -10,12 +10,14 @@ pub struct CommitLog {
     pub from_version: Version,
     pub to_version: Version,
     pub commits: Vec<Commit>,
+    pub html_url: String,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Commit {
     pub sha: String,
     pub commit: CommitDetail,
+    pub html_url: String,
 }
 
 #[derive(Debug, Deserialize)]

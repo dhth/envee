@@ -23,6 +23,7 @@ pub struct FetchCommitLogParams {
 #[derive(Debug, Deserialize)]
 struct CompareResponse {
     commits: Vec<Commit>,
+    html_url: String,
 }
 
 pub async fn fetch_commit_logs(
@@ -151,6 +152,7 @@ pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<Co
         from_version: params.from_version,
         to_version: params.to_version,
         commits: compare_response.commits,
+        html_url: compare_response.html_url,
     })
 }
 
