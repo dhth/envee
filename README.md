@@ -8,6 +8,8 @@
 `envee` lets you quickly compare application versions across environments and
 see git commits between them.
 
+![stdout-report](https://tools.dhruvs.space/images/envee/v0-1-0/stdout-report.png)
+
 > [!NOTE]
 > envee is alpha software. Its interface and behaviour might change in the near
 > future.
