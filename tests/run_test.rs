@@ -25,16 +25,16 @@ fn shows_help() {
 
     Options:
       -V, --versions <PATH>              Path to the versions file [default: versions.toml]
-      -C, --no-commit-logs               Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
           --debug                        Output debug information without doing anything
-      -o, --output-format <FORMAT>       Output format [default: stdout] [possible values: stdout, html]
-      -s, --stdout-table-style <STRING>  Table style for stdout output [default: utf8] [possible values: ascii, markdown, none, utf8]
-      -p, --stdout-plain                 Whether to use output text to stdout without color
-          --html-output <PATH>           Path for the HTML output file [default: envee-report.html]
-          --html-title <STRING>          Title for HTML report (for html output) [default: envee]
-          --html-template <PATH>         Path to custom HTML template file
           --validate-only                Only validate versions file
+      -C, --no-commit-logs               Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
+      -o, --output-format <FORMAT>       Output format [default: stdout] [possible values: stdout, html]
       -f, --filter <REGEX>               Regex to use for filtering apps
+          --stdout-table-style <STRING>  Table style for stdout output [default: utf8] [possible values: ascii, markdown, none, utf8]
+          --stdout-plain                 Whether to use output text to stdout without color
+          --html-output <PATH>           Path for the HTML output file [default: envee-report.html]
+          --html-title <STRING>          Title for HTML report [default: envee]
+          --html-template <PATH>         Path to custom HTML template file
       -h, --help                         Print help
 
     ----- stderr -----
@@ -57,15 +57,13 @@ fn debug_flag_works_for_defaults() {
 
     command:                              Run
     versions file:                        versions.toml
+    only validate versions file:          false
     don't show commit logs:               false
     output format:                        stdout
-    stdout table style:                   utf8
-    stdout plain output:                  false
-    html output path:                     envee-report.html
-    html title:                           envee
-    html template path:                   <NOT PROVIDED>
-    only validate versions file:          false
     app filter:                           <NOT PROVIDED>
+    table style:                          utf8
+    plain output:                         false
+
 
     ----- stderr -----
     ");
@@ -100,15 +98,13 @@ fn debug_flag_works_with_overridden_flags_for_stdout_output() {
 
     command:                              Run
     versions file:                        tests/assets/valid-versions.toml
+    only validate versions file:          true
     don't show commit logs:               false
     output format:                        stdout
-    stdout table style:                   ascii
-    stdout plain output:                  true
-    html output path:                     envee-report.html
-    html title:                           envee
-    html template path:                   <NOT PROVIDED>
-    only validate versions file:          true
     app filter:                           repo
+    table style:                          ascii
+    plain output:                         true
+
 
     ----- stderr -----
     ");
@@ -146,15 +142,14 @@ fn debug_flag_works_with_overridden_flags_for_html_output() {
 
     command:                              Run
     versions file:                        tests/assets/valid-versions.toml
+    only validate versions file:          true
     don't show commit logs:               false
     output format:                        html
-    stdout table style:                   utf8
-    stdout plain output:                  false
-    html output path:                     output.html
-    html title:                           versions
-    html template path:                   tests/assets/absent.html
-    only validate versions file:          true
     app filter:                           repo
+    output path:                          output.html
+    title:                                versions
+    template path:                        tests/assets/absent.html
+
 
     ----- stderr -----
     ");

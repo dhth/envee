@@ -28,15 +28,15 @@ async fn main() -> anyhow::Result<()> {
     match args.command {
         args::EnveeCommand::Run {
             versions_file_path,
+            only_validate_versions,
             no_commit_logs,
             output_format,
+            app_filter,
             stdout_table_style,
             stdout_plain_output,
             html_output_path,
             html_title,
             html_template_path,
-            only_validate_versions,
-            app_filter,
         } => {
             // READ AND VALIDATE INPUT
             let maybe_token = if no_commit_logs || only_validate_versions {
