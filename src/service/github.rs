@@ -1,6 +1,6 @@
 use crate::domain::{
     App, Commit, CommitLog, CommitLogFetchErrors, CommitLogResults, DiffResult, Env,
-    GitTagTransform, GithubOrg, Version, Versions,
+    GitTagTransform, GithubOrg, SyncStatus, Version, Versions,
 };
 use anyhow::Context;
 use futures::stream::{FuturesUnordered, StreamExt};
@@ -35,7 +35,7 @@ pub async fn fetch_commit_logs(
     let out_of_sync: Vec<_> = diff_result
         .app_results
         .iter()
-        .filter(|row| !row.in_sync)
+        .filter(|row| matches!(row.sync_status, SyncStatus::OutOfSync))
         .collect();
 
     if out_of_sync.is_empty() {

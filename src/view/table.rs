@@ -1,5 +1,5 @@
 use crate::config::{StdoutConfig, TableStyle};
-use crate::domain::DiffResult;
+use crate::domain::{DiffResult, SyncStatus};
 use comfy_table::{Cell, Color, Table, presets};
 
 pub fn render_results_table(result: &DiffResult, config: &StdoutConfig) -> String {
@@ -18,32 +18,36 @@ pub fn render_results_table(result: &DiffResult, config: &StdoutConfig) -> Strin
     table.set_header(header);
 
     for row in &result.app_results {
-        let should_highlight = !config.plain_output && !row.in_sync;
+        let (maybe_color, sync_text) = match row.sync_status {
+            SyncStatus::InSync => (None, "✓"),
+            SyncStatus::OutOfSync => (Some(Color::Red), "✗"),
+            SyncStatus::NotApplicable => (Some(Color::Grey), "-"),
+        };
 
-        if should_highlight {
-            let mut cells = vec![Cell::new(&row.app).fg(Color::Red)];
+        match (config.plain_output, maybe_color) {
+            (false, Some(color)) => {
+                let mut cells = vec![Cell::new(&row.app).fg(color)];
 
-            for env in &result.envs {
-                let version = row.values.get(env).map(|v| v.as_ref()).unwrap_or("");
-                cells.push(Cell::new(version).fg(Color::Red));
+                for env in &result.envs {
+                    let version = row.values.get(env).map(|v| v.as_ref()).unwrap_or("");
+                    cells.push(Cell::new(version).fg(color));
+                }
+
+                cells.push(Cell::new(sync_text).fg(color));
+
+                table.add_row(cells);
             }
+            (true, _) | (false, None) => {
+                let mut cells = vec![row.app.to_string()];
+                for env in &result.envs {
+                    let version = row.values.get(env).map(|v| v.as_ref()).unwrap_or("");
+                    cells.push(version.to_string());
+                }
 
-            let in_sync = if row.in_sync { "YES" } else { "NO" };
-            cells.push(Cell::new(in_sync).fg(Color::Red));
+                cells.push(sync_text.to_string());
 
-            table.add_row(cells);
-        } else {
-            let mut cells = vec![row.app.to_string()];
-
-            for env in &result.envs {
-                let version = row.values.get(env).map(|v| v.as_ref()).unwrap_or("");
-                cells.push(version.to_string());
+                table.add_row(cells);
             }
-
-            let in_sync = if row.in_sync { "YES" } else { "NO" };
-            cells.push(in_sync.to_string());
-
-            table.add_row(cells);
         }
     }
 
@@ -78,10 +82,10 @@ mod tests {
         +-----+-------+---------+-------+---------+
         |app  | qa    | staging | prod  | in-sync |
         +=========================================+
-        |app1 | 1.0.0 | 1.0.0   | 1.0.0 | YES     |
-        |app2 | 2.0.0 | 2.0.0   | 1.9.0 | NO      |
-        |app3 | 0.1.0 | 0.1.0   |       | YES     |
-        |app4 | 0.1.0 |         |       | YES     |
+        |app1 | 1.0.0 | 1.0.0   | 1.0.0 | ✓       |
+        |app2 | 2.0.0 | 2.0.0   | 1.9.0 | ✗       |
+        |app3 | 0.1.0 | 0.1.0   |       | ✓       |
+        |app4 | 0.1.0 |         |       | -       |
         +-----+-------+---------+-------+---------+
         ");
     }
@@ -102,10 +106,10 @@ mod tests {
         insta::assert_snapshot!(output, @r"
         |app  | qa    | staging | prod  | in-sync |
         |-----|-------|---------|-------|---------|
-        |app1 | 1.0.0 | 1.0.0   | 1.0.0 | YES     |
-        |app2 | 2.0.0 | 2.0.0   | 1.9.0 | NO      |
-        |app3 | 0.1.0 | 0.1.0   |       | YES     |
-        |app4 | 0.1.0 |         |       | YES     |
+        |app1 | 1.0.0 | 1.0.0   | 1.0.0 | ✓       |
+        |app2 | 2.0.0 | 2.0.0   | 1.9.0 | ✗       |
+        |app3 | 0.1.0 | 0.1.0   |       | ✓       |
+        |app4 | 0.1.0 |         |       | -       |
         ");
     }
 
@@ -124,10 +128,10 @@ mod tests {
         // THEN
         insta::assert_snapshot!(output, @r"
         app   qa     staging  prod   in-sync 
-        app1  1.0.0  1.0.0    1.0.0  YES     
-        app2  2.0.0  2.0.0    1.9.0  NO      
-        app3  0.1.0  0.1.0           YES     
-        app4  0.1.0                  YES
+        app1  1.0.0  1.0.0    1.0.0  ✓       
+        app2  2.0.0  2.0.0    1.9.0  ✗       
+        app3  0.1.0  0.1.0           ✓       
+        app4  0.1.0                  -
         ");
     }
 
@@ -148,10 +152,10 @@ mod tests {
         ┌─────┬───────┬─────────┬───────┬─────────┐
         │app  ┆ qa    ┆ staging ┆ prod  ┆ in-sync │
         ╞═════╪═══════╪═════════╪═══════╪═════════╡
-        │app1 ┆ 1.0.0 ┆ 1.0.0   ┆ 1.0.0 ┆ YES     │
-        │app2 ┆ 2.0.0 ┆ 2.0.0   ┆ 1.9.0 ┆ NO      │
-        │app3 ┆ 0.1.0 ┆ 0.1.0   ┆       ┆ YES     │
-        │app4 ┆ 0.1.0 ┆         ┆       ┆ YES     │
+        │app1 ┆ 1.0.0 ┆ 1.0.0   ┆ 1.0.0 ┆ ✓       │
+        │app2 ┆ 2.0.0 ┆ 2.0.0   ┆ 1.9.0 ┆ ✗       │
+        │app3 ┆ 0.1.0 ┆ 0.1.0   ┆       ┆ ✓       │
+        │app4 ┆ 0.1.0 ┆         ┆       ┆ -       │
         └─────┴───────┴─────────┴───────┴─────────┘
         ");
     }
@@ -183,22 +187,22 @@ mod tests {
                 AppResult {
                     app: "app1".into(),
                     values: app1_values,
-                    in_sync: true,
+                    sync_status: SyncStatus::InSync,
                 },
                 AppResult {
                     app: "app2".into(),
                     values: app2_values,
-                    in_sync: false,
+                    sync_status: SyncStatus::OutOfSync,
                 },
                 AppResult {
                     app: "app3".into(),
                     values: app3_values,
-                    in_sync: true,
+                    sync_status: SyncStatus::InSync,
                 },
                 AppResult {
                     app: "app4".into(),
                     values: app4_values,
-                    in_sync: true,
+                    sync_status: SyncStatus::NotApplicable,
                 },
             ],
         }
