@@ -34,12 +34,12 @@ pub enum EnveeCommand {
         /// Output format
         #[arg(long = "output-format", short = 'o', default_value_t = OutputFormat::Stdout, value_name = "FORMAT")]
         output_format: OutputFormat,
-        /// Output table style (for stdout output)
-        #[arg(long = "table-style", short='s', default_value_t = TableStyle::Utf8, value_name="STRING")]
-        table_style: TableStyle,
+        /// Table style for stdout output
+        #[arg(long = "stdout-table-style", short='s', default_value_t = TableStyle::Utf8, value_name="STRING")]
+        stdout_table_style: TableStyle,
         /// Whether to use output text to stdout without color
-        #[arg(long = "plain", short = 'p')]
-        plain_output: bool,
+        #[arg(long = "stdout-plain", short = 'p')]
+        stdout_plain_output: bool,
         /// Path for the HTML output file
         #[arg(
             long = "html-output",
@@ -69,8 +69,8 @@ impl std::fmt::Display for Args {
                 versions_file_path,
                 no_commit_logs,
                 output_format,
-                table_style,
-                plain_output,
+                stdout_table_style,
+                stdout_plain_output,
                 html_output_path,
                 html_title,
                 html_template_path,
@@ -87,8 +87,8 @@ command:                              Run
 versions file:                        {}
 don't show commit logs:               {}
 output format:                        {}
-table style:                          {}
-plain output:                         {}
+stdout table style:                   {}
+stdout plain output:                  {}
 html output path:                     {}
 html title:                           {}
 html template path:                   {}
@@ -98,8 +98,8 @@ app filter:                           {}
                     versions_file_path.to_string_lossy(),
                     no_commit_logs,
                     output_format_str,
-                    table_style,
-                    plain_output,
+                    stdout_table_style,
+                    stdout_plain_output,
                     html_output_path.to_string_lossy(),
                     html_title,
                     html_template_path

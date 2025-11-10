@@ -24,18 +24,18 @@ fn shows_help() {
     Usage: envee run [OPTIONS]
 
     Options:
-      -V, --versions <PATH>         Path to the versions file [default: versions.toml]
-      -C, --no-commit-logs          Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
-          --debug                   Output debug information without doing anything
-      -o, --output-format <FORMAT>  Output format [default: stdout] [possible values: stdout, html]
-      -s, --table-style <STRING>    Output table style (for stdout output) [default: utf8] [possible values: ascii, markdown, none, utf8]
-      -p, --plain                   Whether to use output text to stdout without color
-          --html-output <PATH>      Path for the HTML output file [default: envee-report.html]
-          --html-title <STRING>     Title for HTML report (for html output) [default: envee]
-          --html-template <PATH>    Path to custom HTML template file
-          --validate-only           Only validate versions file
-      -f, --filter <REGEX>          Regex to use for filtering apps
-      -h, --help                    Print help
+      -V, --versions <PATH>              Path to the versions file [default: versions.toml]
+      -C, --no-commit-logs               Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
+          --debug                        Output debug information without doing anything
+      -o, --output-format <FORMAT>       Output format [default: stdout] [possible values: stdout, html]
+      -s, --stdout-table-style <STRING>  Table style for stdout output [default: utf8] [possible values: ascii, markdown, none, utf8]
+      -p, --stdout-plain                 Whether to use output text to stdout without color
+          --html-output <PATH>           Path for the HTML output file [default: envee-report.html]
+          --html-title <STRING>          Title for HTML report (for html output) [default: envee]
+          --html-template <PATH>         Path to custom HTML template file
+          --validate-only                Only validate versions file
+      -f, --filter <REGEX>               Regex to use for filtering apps
+      -h, --help                         Print help
 
     ----- stderr -----
     ");
@@ -59,8 +59,8 @@ fn debug_flag_works_for_defaults() {
     versions file:                        versions.toml
     don't show commit logs:               false
     output format:                        stdout
-    table style:                          utf8
-    plain output:                         false
+    stdout table style:                   utf8
+    stdout plain output:                  false
     html output path:                     envee-report.html
     html title:                           envee
     html template path:                   <NOT PROVIDED>
@@ -82,8 +82,8 @@ fn debug_flag_works_with_overridden_flags_for_stdout_output() {
         "repo",
         "--output-format",
         "stdout",
-        "--plain",
-        "--table-style",
+        "--stdout-plain",
+        "--stdout-table-style",
         "ascii",
         "--validate-only",
         "--versions",
@@ -102,8 +102,8 @@ fn debug_flag_works_with_overridden_flags_for_stdout_output() {
     versions file:                        tests/assets/valid-versions.toml
     don't show commit logs:               false
     output format:                        stdout
-    table style:                          ascii
-    plain output:                         true
+    stdout table style:                   ascii
+    stdout plain output:                  true
     html output path:                     envee-report.html
     html title:                           envee
     html template path:                   <NOT PROVIDED>
@@ -148,8 +148,8 @@ fn debug_flag_works_with_overridden_flags_for_html_output() {
     versions file:                        tests/assets/valid-versions.toml
     don't show commit logs:               false
     output format:                        html
-    table style:                          utf8
-    plain output:                         false
+    stdout table style:                   utf8
+    stdout plain output:                  false
     html output path:                     output.html
     html title:                           versions
     html template path:                   tests/assets/absent.html
@@ -167,7 +167,7 @@ fn works_for_valid_versions_file() {
     let mut cmd = fx.cmd([
         "run",
         "--no-commit-logs",
-        "--plain",
+        "--stdout-plain",
         "--versions",
         "tests/assets/valid-versions.toml",
     ]);
@@ -224,7 +224,7 @@ fn fails_if_provided_with_absent_versions_file() {
     let mut cmd = fx.cmd([
         "run",
         "--no-commit-logs",
-        "--plain",
+        "--stdout-plain",
         "--versions",
         "tests/assets/absent.toml",
     ]);
@@ -251,7 +251,7 @@ fn fails_if_provided_with_invalid_versions_schema() {
     let mut cmd = fx.cmd([
         "run",
         "--no-commit-logs",
-        "--plain",
+        "--stdout-plain",
         "--versions",
         "tests/assets/invalid-schema.toml",
     ]);
@@ -282,7 +282,7 @@ fn fails_if_provided_with_invalid_versions_data() {
     let mut cmd = fx.cmd([
         "run",
         "--no-commit-logs",
-        "--plain",
+        "--stdout-plain",
         "--versions",
         "tests/assets/invalid-data.toml",
     ]);
