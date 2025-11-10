@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACN0lEQVR4AUxSO2tUURD+5kpWd0EtgkSFJYogu3/AQlubRdNaqbGIyhYahGAgBOIzoAY0gkYlCxHEQhAkwQcWChYShETEIojGTeGzSJAUPlI4+b65d7M5nDnzzeubOffcpFQq+WopZ3ZDl8qMSzK/csuZLZ0YshXA4JnpCEdqOZVlNrW7RdTpTyiMNraDcViYHucqRtqMqIpIUTNDgsaih2E42QkhFuNh0NIZXhpN7O5NApKtBIUre3fhxrVTuFfrx9m+TmzZ3AqYSCSESFc6AUnllrApjhzch8sXqtjUuhGfZr9gf2U37lzvwZokTVcOB4V0eJrEjvzaHKpdHZhfWMShoxcxMDiGJ88n0d7ehp07iogVnYRMV2B7bmRr+7atyK/LYcP6Ap49GsLkyxF0VPaoGXK5lsgynSSx9BsQyaEURnR/53z1ue/o7b+Jkz3D6DoxhM5jl/B+ZlZZfJg0UZXN/0Ak9NTnfuDf0hKKxTZ8/TaPN1MfMDU9g4Vfi/D/YDETeWd1J0L8B6wj9mD//ecvancf8xoteHj/HMZu9WL8wSCunD8OPRt7MzclEs4mEJSfmvt2bRx9Z0bx9t1HFAp5fK7/xMjoRDRwpUmYJxwTkDqC4jXe32lNPH2NavdVHDg8gO7Tw3jxajodn8XKCYMkfEaeLHAGPNNUiI9p8jAgo4FpelQTwPSMADXFQqVTMMURSyo+WExGl1G4Q7mLgCkEukYUM+KkopIJNXcWhEHNQYAIItYyAAAA//8sM7n7AAAABklEQVQDAO2/0Ju6kMR1AAAAAElFTkSuQmCC">
+    <title>{{ title }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: "Open Sans", sans-serif;
+      }
+      .changes-section {
+        font-family: "Fira Mono", monospace;
+      }
+    </style>
+  </head>
+  <body class="bg-[#282828]">
+    <div class="w-2/3 max-sm:w-full max-sm:px-4 mx-auto min-h-screen pt-8">
+      <h1 class="text-[#fbf1c7] text-3xl mb-4 font-semibold">
+        {{ title }}
+      </h1>
+      <p class="text-[#928374] italic mt-4">Generated at {{ timestamp }}</p>
+      <div class="mt-2 overflow-x-auto">
+        <table class="table-auto w-full text-right max-sm:text-xs font-semibold whitespace-nowrap">
+          <thead>
+            <tr class="text-[#fbf1c7] bg-[#3c3836]">
+              {%- for column in columns %}
+              <th class="px-10 py-2">{{ column }}</th>
+              {%- endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {%- for row in rows %}
+            {%- if row.in_sync %}
+            <tr class="text-[#b8bb26]">
+              {%- else %}
+            <tr class="text-[#fb4934]">
+              {%- endif %}
+              {%- for cell in row.data %}
+              <td class="px-10 py-2">{{ cell }}</td>
+              {%- endfor %}
+            </tr>
+            {%- endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="overflow-x-auto">
+        {%- if commit_logs %}
+        <div class="flex gap-4 items-center mt-8">
+          <p class="text-[#fabd2f] text-xl font-semibold">Changes</p>
+          <button class="bg-[#83a598] text-[#282828] font-semibold text-xs p-2 hover:bg-[#fabd2f]" onclick="toggleAllDetails()">
+          Toggle All
+          </button>
+        </div>
+        {%- for log in commit_logs %}
+        <div class="my-4 overflow-x-auto">
+          <details>
+            <summary class="text-[#83a598] cursor-pointer max-sm:text-sm">{{ log.app }}</summary>
+            <div class="mt-2 max-sm:p-2 p-4 bg-[#2e2c2c] changes-section max-sm:text-xs text-sm">
+              {%- if log.commits %}
+              <div class="flex flex-col items-left gap-4 overflow-x-auto">
+                {%- if log.compare_url %}
+                <a class="text-[#928374]" href="{{ log.compare_url }}" target="_blank">{{ log.from_env }}..{{ log.to_env }} ({{ log.from_version }}...{{ log.to_version }})</a>
+                {%- endif %}
+                <table class="w-full text-left max-sm:text-xs text-sm whitespace-nowrap">
+                  <tbody>
+                    {%- for commit in log.commits %}
+                    <tr class="">
+                      <td class="px-4 py-1 text-[#fabd2f]"><a target="_blank" href="{{ commit.html_url }}">{{ commit.short_sha }}</a></td>
+                      <td class="px-4 py-1 text-[#83a598]"><a target="_blank" href="{{ commit.html_url }}">{{ commit.message }}</a></td>
+                      <td class="px-4 py-1 text-[#d3869b]"><a target="_blank" href="{{ commit.html_url }}">{{ commit.author }}</a></td>
+                      <td class="px-4 py-1 text-[#bdae93]"><a target="_blank" href="{{ commit.html_url }}">{{ commit.date }}</a></td>
+                    </tr>
+                    {%- endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {%- endif %}
+            </div>
+          </details>
+        </div>
+        {%- endfor %}
+        {%- endif %}
+      </div>
+      <p class="text-[#928374] italic my-10 pt-2 border-t-2 border-[#928374] border-opacity-20">Built using <a class="font-bold" href="https://github.com/dhth/envee" target="_blank">envee</a></p>
+    </div>
+    <button id="scrollToTop" onclick="window.scrollTo({top: 0, behavior: 'instant'});"
+      class="hidden fixed bottom-4 left-4 z-50 bg-[#928374] text-[#282828] px-4 py-2 rounded-full shadow-lg hover:bg-[#d3869b] font-bold transition"
+      aria-label="Go to top">
+    ↑
+    </button>
+  </body>
+  <script>
+const scrollToTopButton = document.getElementById("scrollToTop");
+let allDetailsOpen = false;
+
+function toggleAllDetails() {
+  allDetailsOpen = !allDetailsOpen;
+  document.querySelectorAll("details").forEach((detail) => {
+      detail.open = allDetailsOpen;
+  });
+}
+
+window.addEventListener("scroll", function () {
+  if (window.scrollY > 100) {
+      scrollToTopButton.classList.remove("hidden");
+  } else {
+      scrollToTopButton.classList.add("hidden");
+  }
+});
+  </script>
+</html>

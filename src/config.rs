@@ -1,3 +1,21 @@
+use clap::ValueEnum;
+use std::path::PathBuf;
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum OutputFormat {
+    Stdout,
+    Html,
+}
+
+impl std::fmt::Display for OutputFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OutputFormat::Stdout => write!(f, "stdout"),
+            OutputFormat::Html => write!(f, "html"),
+        }
+    }
+}
+
 #[allow(unused)]
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum TableStyle {
@@ -24,12 +42,19 @@ pub struct StdoutConfig {
     pub plain_output: bool,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum OutputType {
-    Stdout(StdoutConfig),
+#[derive(Debug, Clone)]
+pub struct HtmlConfig {
+    pub output_path: PathBuf,
+    pub title: String,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
+pub enum OutputType {
+    Stdout(StdoutConfig),
+    Html(HtmlConfig),
+}
+
+#[derive(Debug, Clone)]
 pub struct Config {
     pub output_type: OutputType,
 }

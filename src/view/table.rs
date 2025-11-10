@@ -2,7 +2,7 @@ use crate::config::{StdoutConfig, TableStyle};
 use crate::domain::DiffResult;
 use comfy_table::{Cell, Color, Table, presets};
 
-pub fn render_results_table(result: DiffResult, config: &StdoutConfig) -> String {
+pub fn render_results_table(result: &DiffResult, config: &StdoutConfig) -> String {
     let mut table = Table::new();
 
     match config.table_style {
@@ -17,7 +17,7 @@ pub fn render_results_table(result: DiffResult, config: &StdoutConfig) -> String
     header.push("in-sync".to_string());
     table.set_header(header);
 
-    for row in result.app_results {
+    for row in &result.app_results {
         let should_highlight = !config.plain_output && !row.in_sync;
 
         if should_highlight {
@@ -71,7 +71,7 @@ mod tests {
         };
 
         // WHEN
-        let output = render_results_table(result, &config);
+        let output = render_results_table(&result, &config);
 
         // THEN
         insta::assert_snapshot!(output, @r"
@@ -96,7 +96,7 @@ mod tests {
         };
 
         // WHEN
-        let output = render_results_table(result, &config);
+        let output = render_results_table(&result, &config);
 
         // THEN
         insta::assert_snapshot!(output, @r"
@@ -119,7 +119,7 @@ mod tests {
         };
 
         // WHEN
-        let output = render_results_table(result, &config);
+        let output = render_results_table(&result, &config);
 
         // THEN
         insta::assert_snapshot!(output, @r"
@@ -141,7 +141,7 @@ mod tests {
         };
 
         // WHEN
-        let output = render_results_table(result, &config);
+        let output = render_results_table(&result, &config);
 
         // THEN
         insta::assert_snapshot!(output, @r"

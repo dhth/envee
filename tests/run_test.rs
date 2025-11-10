@@ -24,14 +24,18 @@ fn shows_help() {
     Usage: envee run [OPTIONS]
 
     Options:
-      -V, --versions <PATH>       Path to the versions file [default: versions.toml]
-      -C, --no-commit-logs        Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
-          --debug                 Output debug information without doing anything
-      -s, --table-style <STRING>  Output table style [default: utf8] [possible values: ascii, markdown, none, utf8]
-      -p, --plain                 Whether to use output text to stdout without color
-          --validate-only         Only validate versions file
-      -f, --filter <REGEX>        Regex to use for filtering apps
-      -h, --help                  Print help
+      -V, --versions <PATH>         Path to the versions file [default: versions.toml]
+      -C, --no-commit-logs          Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
+          --debug                   Output debug information without doing anything
+      -o, --output-format <FORMAT>  Output format [default: stdout] [possible values: stdout, html]
+      -s, --table-style <STRING>    Output table style (for stdout output) [default: utf8] [possible values: ascii, markdown, none, utf8]
+      -p, --plain                   Whether to use output text to stdout without color
+          --html-output <PATH>      Path for the HTML output file [default: envee-report.html]
+          --html-title <STRING>     Title for HTML report (for html output) [default: envee]
+          --html-template <PATH>    Path to custom HTML template file
+          --validate-only           Only validate versions file
+      -f, --filter <REGEX>          Regex to use for filtering apps
+      -h, --help                    Print help
 
     ----- stderr -----
     ");
@@ -54,8 +58,12 @@ fn debug_flag_works_for_defaults() {
     command:                              Run
     versions file:                        versions.toml
     don't show commit logs:               false
+    output format:                        stdout
     table style:                          utf8
     plain output:                         false
+    html output path:                     envee-report.html
+    html title:                           envee
+    html template path:                   <NOT PROVIDED>
     only validate versions file:          false
     app filter:                           <NOT PROVIDED>
 
@@ -64,7 +72,7 @@ fn debug_flag_works_for_defaults() {
 }
 
 #[test]
-fn debug_flag_works_with_overridden_flags() {
+fn debug_flag_works_with_overridden_flags_for_stdout_output() {
     // GIVEN
     let fx = Fixture::new();
     let mut cmd = fx.cmd([
@@ -72,9 +80,12 @@ fn debug_flag_works_with_overridden_flags() {
         "--debug",
         "--filter",
         "repo",
+        "--output-format",
+        "stdout",
         "--plain",
         "--table-style",
         "ascii",
+        "--validate-only",
         "--versions",
         "tests/assets/valid-versions.toml",
     ]);
@@ -90,9 +101,59 @@ fn debug_flag_works_with_overridden_flags() {
     command:                              Run
     versions file:                        tests/assets/valid-versions.toml
     don't show commit logs:               false
+    output format:                        stdout
     table style:                          ascii
     plain output:                         true
-    only validate versions file:          false
+    html output path:                     envee-report.html
+    html title:                           envee
+    html template path:                   <NOT PROVIDED>
+    only validate versions file:          true
+    app filter:                           repo
+
+    ----- stderr -----
+    ");
+}
+
+#[test]
+fn debug_flag_works_with_overridden_flags_for_html_output() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd([
+        "run",
+        "--debug",
+        "--filter",
+        "repo",
+        "--html-output",
+        "output.html",
+        "--html-template",
+        "tests/assets/absent.html",
+        "--html-title",
+        "versions",
+        "--output-format",
+        "html",
+        "--validate-only",
+        "--versions",
+        "tests/assets/valid-versions.toml",
+    ]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r"
+    success: true
+    exit_code: 0
+    ----- stdout -----
+    DEBUG INFO
+
+    command:                              Run
+    versions file:                        tests/assets/valid-versions.toml
+    don't show commit logs:               false
+    output format:                        html
+    table style:                          utf8
+    plain output:                         false
+    html output path:                     output.html
+    html title:                           versions
+    html template path:                   tests/assets/absent.html
+    only validate versions file:          true
     app filter:                           repo
 
     ----- stderr -----
@@ -389,4 +450,34 @@ fn fails_if_no_gh_token_is_provided() {
     ----- stderr -----
     Error: ENVEE_GH_TOKEN needs to be set to fetch commit logs from GitHub
     ");
+}
+
+#[test]
+fn fails_if_provided_with_absent_html_template_file() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd([
+        "run",
+        "--html-template",
+        "tests/assets/absent.html",
+        "--no-commit-logs",
+        "--output-format",
+        "html",
+        "--versions",
+        "tests/assets/valid-versions.toml",
+    ]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @r#"
+    success: false
+    exit_code: 1
+    ----- stdout -----
+
+    ----- stderr -----
+    Error: failed to read HTML template from "tests/assets/absent.html"
+
+    Caused by:
+        No such file or directory (os error 2)
+    "#);
 }
