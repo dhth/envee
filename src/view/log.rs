@@ -131,10 +131,9 @@ mod tests {
                 Commit {
                     sha: "1443d43".to_string(),
                     commit: CommitDetail {
-                        message: "add cli test for when no application versions match app filter"
-                            .to_string(),
+                        message: "add cli test for when no versions match app filter".to_string(),
                         author: Author {
-                            name: "Dhruv Thakur".to_string(),
+                            name: "User A".to_string(),
                             date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 30, 0).unwrap(),
                         },
                     },
@@ -144,7 +143,7 @@ mod tests {
                     commit: CommitDetail {
                         message: "allow filtering apps to run for (#3) commit".to_string(),
                         author: Author {
-                            name: "User A".to_string(),
+                            name: "User B".to_string(),
                             date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 0, 0).unwrap(),
                         },
                     },
@@ -154,7 +153,7 @@ mod tests {
                     commit: CommitDetail {
                         message: "allow configuring table style (#2) commit".to_string(),
                         author: Author {
-                            name: "Dhruv Thakur".to_string(),
+                            name: "User A".to_string(),
                             date: Utc.with_ymd_and_hms(2025, 1, 15, 10, 0, 0).unwrap(),
                         },
                     },
@@ -173,9 +172,9 @@ mod tests {
 
         app-two prod..dev (2.0.0..2.1.0)
 
-         1443d43  add cli test for when no application versions match app filter  30m ago  Dhruv Thakur 
-         c536d77  allow filtering apps to run for (#3) commit                     1h ago   User A       
-         2ff3e97  allow configuring table style (#2) commit                       1d ago   Dhruv Thakur
+         1443d43  add cli test for when no versions match app filter  30m ago  User A 
+         c536d77  allow filtering apps to run for (#3) commit         1h ago   User B 
+         2ff3e97  allow configuring table style (#2) commit           1d ago   User A
         ");
     }
 
@@ -197,7 +196,7 @@ mod tests {
                         message: "add cli test for when no application versions match app filter (this commit is very long for some reason)"
                             .to_string(),
                         author: Author {
-                            name: "Dhruv Thakur".to_string(),
+                            name: "User A".to_string(),
                             date: Utc.with_ymd_and_hms(2025, 1, 16, 11, 30, 0).unwrap(),
                         },
                     },
@@ -212,7 +211,7 @@ mod tests {
         insta::assert_snapshot!(result, @r"
         app-two prod..dev (2.0.0..2.1.0)
 
-         1443d43  add cli test for when no application versions match app filter (this commit i...  30m ago  Dhruv Thakur
+         1443d43  add cli test for when no application versions match app filter (this commit i...  30m ago  User A
         ");
     }
 
