@@ -95,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 let token =
                     maybe_token.with_context(|| format!("{ENV_VAR_GH_TOKEN} is not set"))?;
-                Some(service::fetch_commit_logs(&diff_result, &versions, &token).await?)
+                Some(service::fetch_commit_logs(&diff_result, &versions, &token).await)
             };
 
             // DISPLAY OUTPUT

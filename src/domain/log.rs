@@ -35,21 +35,31 @@ pub struct Author {
 #[derive(Debug)]
 pub struct CommitLogResults {
     pub logs: Vec<CommitLog>,
-    pub errors: CommitLogErrors,
+    pub errors: CommitLogFetchErrors,
 }
 
 #[derive(Debug)]
-pub struct CommitLogErrors {
-    errors: Vec<CommitLogError>,
+pub enum CommitLogFetchError {
+    App { app: App, error: anyhow::Error },
+    System { error: anyhow::Error },
 }
 
-impl CommitLogErrors {
+#[derive(Debug)]
+pub struct CommitLogFetchErrors {
+    errors: Vec<CommitLogFetchError>,
+}
+
+impl CommitLogFetchErrors {
     pub fn new() -> Self {
         Self { errors: Vec::new() }
     }
 
-    pub fn add_error(&mut self, error: CommitLogError) {
-        self.errors.push(error);
+    pub fn add_app_error(&mut self, app: App, error: anyhow::Error) {
+        self.errors.push(CommitLogFetchError::App { app, error });
+    }
+
+    pub fn add_system_error(&mut self, error: anyhow::Error) {
+        self.errors.push(CommitLogFetchError::System { error });
     }
 
     pub fn is_empty(&self) -> bool {
@@ -57,20 +67,21 @@ impl CommitLogErrors {
     }
 }
 
-impl std::fmt::Display for CommitLogErrors {
+impl std::fmt::Display for CommitLogFetchErrors {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "failed to fetch commit logs for some apps:")?;
+        writeln!(f, "couldn't fetch commit logs for some apps:")?;
         for error in &self.errors {
-            writeln!(f, " - {}: {}", error.app, error.error)?;
+            match error {
+                CommitLogFetchError::App { app, error } => {
+                    writeln!(f, " - {}: {}", app, error)?;
+                }
+                CommitLogFetchError::System { error } => {
+                    writeln!(f, " - system error: {}", error)?;
+                }
+            }
         }
         Ok(())
     }
 }
 
-impl std::error::Error for CommitLogErrors {}
-
-#[derive(Debug)]
-pub struct CommitLogError {
-    pub app: App,
-    pub error: anyhow::Error,
-}
+impl std::error::Error for CommitLogFetchErrors {}

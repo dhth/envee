@@ -1,5 +1,5 @@
 use crate::domain::{
-    App, Commit, CommitLog, CommitLogError, CommitLogErrors, CommitLogResults, DiffResult, Env,
+    App, Commit, CommitLog, CommitLogFetchErrors, CommitLogResults, DiffResult, Env,
     GitTagTransform, GithubOrg, Version, Versions,
 };
 use anyhow::Context;
@@ -31,7 +31,7 @@ pub async fn fetch_commit_logs(
     diff_result: &DiffResult,
     versions: &Versions,
     token: &str,
-) -> anyhow::Result<CommitLogResults> {
+) -> CommitLogResults {
     let out_of_sync: Vec<_> = diff_result
         .app_results
         .iter()
@@ -39,10 +39,10 @@ pub async fn fetch_commit_logs(
         .collect();
 
     if out_of_sync.is_empty() {
-        return Ok(CommitLogResults {
+        return CommitLogResults {
             logs: vec![],
-            errors: CommitLogErrors::new(),
-        });
+            errors: CommitLogFetchErrors::new(),
+        };
     }
 
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_FETCHES));
@@ -94,26 +94,26 @@ pub async fn fetch_commit_logs(
     }
 
     let mut commit_logs = Vec::new();
-    let mut errors = CommitLogErrors::new();
+    let mut errors = CommitLogFetchErrors::new();
 
     while let Some(task_result) = futures.next().await {
         match task_result {
             Ok((_app, Ok(log))) => commit_logs.push(log),
             Ok((app, Err(e))) => {
-                errors.add_error(CommitLogError { app, error: e });
+                errors.add_app_error(app, e);
             }
             Err(e) => {
-                anyhow::bail!("couldn't join future: {e}");
+                errors.add_system_error(anyhow::anyhow!("task panicked: {e}"));
             }
         }
     }
 
     commit_logs.sort_by(|a, b| a.app.cmp(&b.app));
 
-    Ok(CommitLogResults {
+    CommitLogResults {
         logs: commit_logs,
         errors,
-    })
+    }
 }
 
 pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<CommitLog> {

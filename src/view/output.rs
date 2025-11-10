@@ -46,7 +46,7 @@ mod tests {
     use super::super::testdata::{TEST_HTML_TEMPLATE, get_result_and_commit_logs};
     use super::*;
     use crate::config::{HtmlConfig, StdoutConfig, TableStyle};
-    use crate::domain::{CommitLogErrors, CommitLogResults};
+    use crate::domain::{CommitLogFetchErrors, CommitLogResults};
     use chrono::TimeZone;
     use std::path::PathBuf;
 
@@ -56,7 +56,7 @@ mod tests {
         let (diff_result, logs) = get_result_and_commit_logs();
         let commit_log_results = Some(CommitLogResults {
             logs,
-            errors: CommitLogErrors::new(),
+            errors: CommitLogFetchErrors::new(),
         });
         let config = Config {
             output_type: OutputType::Stdout(StdoutConfig {
@@ -127,7 +127,7 @@ mod tests {
         let (diff_result, _) = get_result_and_commit_logs();
         let commit_log_results = Some(CommitLogResults {
             logs: vec![],
-            errors: crate::domain::CommitLogErrors::new(),
+            errors: CommitLogFetchErrors::new(),
         });
         let config = Config {
             output_type: OutputType::Stdout(StdoutConfig {
@@ -159,7 +159,7 @@ mod tests {
         let (diff_result, logs) = get_result_and_commit_logs();
         let commit_log_results = Some(CommitLogResults {
             logs,
-            errors: CommitLogErrors::new(),
+            errors: CommitLogFetchErrors::new(),
         });
         let config = Config {
             output_type: OutputType::Html(HtmlConfig {
