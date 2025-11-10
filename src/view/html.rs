@@ -159,7 +159,7 @@ fn build_html_data(
 
 #[cfg(test)]
 mod tests {
-    use super::super::testdata::get_result_and_commit_logs;
+    use super::super::testdata::{TEST_HTML_TEMPLATE, get_result_and_commit_logs};
     use super::*;
     use chrono::TimeZone;
 
@@ -326,6 +326,107 @@ mod tests {
           }
         });
           </script>
+        </html>
+        "#);
+    }
+
+    #[test]
+    fn custom_html_template_is_rendered_correctly() {
+        // GIVEN
+        let (diff_result, commit_logs) = get_result_and_commit_logs();
+        let now = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
+
+        // WHEN
+        let html = render_html(
+            &diff_result,
+            &commit_logs,
+            TEST_HTML_TEMPLATE,
+            "versions",
+            now,
+        )
+        .expect("result should've been Ok");
+
+        // THEN
+        insta::assert_snapshot!(html, @r#"
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>versions</title>
+        </head>
+        <body>
+          <h1>versions</h1>
+          <p>Generated: 2025-01-16T12:00:00Z</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>app</th>
+                <th>dev</th>
+                <th>prod</th>
+                <th>in sync</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>app-one</td>
+                <td>1.1.0</td>
+                <td>1.0.0</td>
+                <td>✗</td>
+              </tr>
+              <tr>
+                <td>app-two</td>
+                <td>2.1.0</td>
+                <td>2.0.0</td>
+                <td>✗</td>
+              </tr>
+              <tr>
+                <td>app-three</td>
+                <td>1.5.0</td>
+                <td>1.5.0</td>
+                <td>✓</td>
+              </tr>
+            </tbody>
+          </table>
+          <h2>Commit Logs</h2>
+          <div>
+            <h3>app-one</h3>
+            <p>prod..dev (1.0.0...1.1.0)</p>
+            <p>Compare: <a href="https://github.com/org/app-one/compare/1.0.0...1.1.0">https://github.com/org/app-one/compare/1.0.0...1.1.0</a></p>
+            <ul>
+              <li>
+                <a href="https://github.com/org/app-one/commit/abc1234567890">ae7de14</a>
+                - First commit
+                - User A
+                - Jan 15, 2025
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3>app-two</h3>
+            <p>prod..dev (2.0.0...2.1.0)</p>
+            <p>Compare: <a href="https://github.com/org/app-two/compare/2.0.0...2.1.0">https://github.com/org/app-two/compare/2.0.0...2.1.0</a></p>
+            <ul>
+              <li>
+                <a href="https://github.com/org/app-two/commit/1443d43">1443d43</a>
+                - add cli test for when no versions match app filter
+                - User A
+                - Jan 16, 2025
+              </li>
+              <li>
+                <a href="https://github.com/org/app-two/commit/c536d77">c536d77</a>
+                - allow filtering apps to run for (#3) commit
+                - User B
+                - Jan 16, 2025
+              </li>
+              <li>
+                <a href="https://github.com/org/app-two/commit/2ff3e97">2ff3e97</a>
+                - allow configuring table style (#2) commit
+                - User A
+                - Jan 15, 2025
+              </li>
+            </ul>
+          </div>
+        </body>
         </html>
         "#);
     }
