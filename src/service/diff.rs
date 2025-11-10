@@ -16,18 +16,16 @@ pub fn get_diff_result(envs: Vec<Env>, versions: &Vec<AppVersion>) -> DiffResult
     for (app, env_to_version) in app_data {
         let sync_status = if env_to_version.len() == 1 {
             SyncStatus::NotApplicable
+        } else if envs
+            .iter()
+            .filter_map(|env| env_to_version.get(env))
+            .collect::<HashSet<&Version>>()
+            .len()
+            == 1
+        {
+            SyncStatus::InSync
         } else {
-            if envs
-                .iter()
-                .filter_map(|env| env_to_version.get(env))
-                .collect::<HashSet<&Version>>()
-                .len()
-                == 1
-            {
-                SyncStatus::InSync
-            } else {
-                SyncStatus::OutOfSync
-            }
+            SyncStatus::OutOfSync
         };
 
         rows.push(AppResult {
