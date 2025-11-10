@@ -27,7 +27,7 @@ fn shows_help() {
       -V, --versions <PATH>              Path to the versions file [default: versions.toml]
           --debug                        Output debug information without doing anything
           --validate-only                Only validate versions file
-      -C, --no-commit-logs               Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
+      -C, --no-commit-logs               Skip fetching and showing commit logs
       -o, --output-format <FORMAT>       Output format [default: stdout] [possible values: stdout, html]
       -f, --filter <REGEX>               Regex to use for filtering apps
           --stdout-table-style <STRING>  Table style for stdout output [default: utf8] [possible values: ascii, markdown, none, utf8]

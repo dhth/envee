@@ -1,7 +1,23 @@
 [package]
 name = "envee"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2024"
+authors = ["Dhruv Thakur"]
+repository = "https://github.com/dhth/envee"
+description = "compare application versions across environments and see git commits between them"
+homepage = "https://tools.dhruvs.space/envee"
+license = "MIT"
+keywords = [
+    "cli",
+    "github",
+]
+categories = [
+    "command-line-utilities",
+]
+exclude = [
+    ".github",
+    "justfile",
+]
 
 [dependencies]
 anyhow = "1.0.100"
@@ -22,9 +38,10 @@ toml = { version = "0.9.7", features = ["parse"] }
 insta = { version = "1.43.2", features = ["yaml"] }
 insta-cmd = "0.6.0"
 
-[profile.dev.package]
-insta.opt-level = 3
-similar.opt-level = 3
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
 
 [lints.clippy]
 unwrap_used = "deny"

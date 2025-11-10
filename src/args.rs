@@ -31,7 +31,7 @@ pub enum EnveeCommand {
         /// Only validate versions file
         #[arg(long = "validate-only")]
         only_validate_versions: bool,
-        /// Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
+        /// Skip fetching and showing commit logs
         #[arg(long = "no-commit-logs", short = 'C')]
         no_commit_logs: bool,
         /// Output format
