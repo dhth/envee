@@ -1,5 +1,6 @@
 use crate::domain::{
-    App, Commit, CommitLog, DiffResult, Env, GitTagTransform, GithubOrg, Version, Versions,
+    App, Commit, CommitLog, CommitLogFetchErrors, CommitLogResults, DiffResult, Env,
+    GitTagTransform, GithubOrg, Version, Versions,
 };
 use anyhow::Context;
 use futures::stream::{FuturesUnordered, StreamExt};
@@ -30,7 +31,7 @@ pub async fn fetch_commit_logs(
     diff_result: &DiffResult,
     versions: &Versions,
     token: &str,
-) -> Vec<CommitLog> {
+) -> CommitLogResults {
     let out_of_sync: Vec<_> = diff_result
         .app_results
         .iter()
@@ -38,7 +39,10 @@ pub async fn fetch_commit_logs(
         .collect();
 
     if out_of_sync.is_empty() {
-        return vec![];
+        return CommitLogResults {
+            logs: vec![],
+            errors: CommitLogFetchErrors::new(),
+        };
     }
 
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_FETCHES));
@@ -62,13 +66,18 @@ pub async fn fetch_commit_logs(
             continue;
         };
 
-        futures.push(tokio::task::spawn(async move {
-            let _permit = semaphore
-                .acquire()
-                .await
-                .context("couldn't acquire semaphore")?;
+        let app_clone = app.clone();
 
-            fetch_commit_log(FetchCommitLogParams {
+        futures.push(tokio::task::spawn(async move {
+            let permit = semaphore.acquire().await;
+            if let Err(e) = permit {
+                return (
+                    app_clone,
+                    Err(anyhow::anyhow!("couldn't acquire semaphore: {e}")),
+                );
+            }
+
+            let result = fetch_commit_log(FetchCommitLogParams {
                 github_org,
                 app,
                 from_env,
@@ -78,22 +87,33 @@ pub async fn fetch_commit_logs(
                 token,
                 tag_transform,
             })
-            .await
+            .await;
+
+            (app_clone, result)
         }));
     }
 
     let mut commit_logs = Vec::new();
-    while let Some(result) = futures.next().await {
-        match result {
-            Ok(Ok(log)) => commit_logs.push(log),
-            Ok(Err(e)) => eprintln!("failed to fetch commit log: {}", e),
-            Err(e) => eprintln!("couldn't run task: {}", e),
+    let mut errors = CommitLogFetchErrors::new();
+
+    while let Some(task_result) = futures.next().await {
+        match task_result {
+            Ok((_app, Ok(log))) => commit_logs.push(log),
+            Ok((app, Err(e))) => {
+                errors.add_app_error(app, e);
+            }
+            Err(e) => {
+                errors.add_system_error(anyhow::anyhow!("task panicked: {e}"));
+            }
         }
     }
 
     commit_logs.sort_by(|a, b| a.app.cmp(&b.app));
 
-    commit_logs
+    CommitLogResults {
+        logs: commit_logs,
+        errors,
+    }
 }
 
 pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<CommitLog> {

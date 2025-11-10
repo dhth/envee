@@ -102,3 +102,55 @@ pub(super) fn get_result_and_commit_logs() -> (DiffResult, Vec<CommitLog>) {
 
     (diff_result, vec![log1, log2])
 }
+
+pub(super) const TEST_HTML_TEMPLATE: &str = r#"<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ title }}</title>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <p>Generated: {{ timestamp }}</p>
+
+  <table>
+    <thead>
+      <tr>
+        {%- for column in columns %}
+        <th>{{ column }}</th>
+        {%- endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {%- for row in rows %}
+      <tr>
+        {%- for cell in row.data %}
+        <td>{{ cell }}</td>
+        {%- endfor %}
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+
+  {%- if commit_logs %}
+  <h2>Commit Logs</h2>
+  {%- for log in commit_logs %}
+  <div>
+    <h3>{{ log.app }}</h3>
+    <p>{{ log.from_env }}..{{ log.to_env }} ({{ log.from_version }}...{{ log.to_version }})</p>
+    <p>Compare: <a href="{{ log.compare_url }}">{{ log.compare_url }}</a></p>
+    <ul>
+      {%- for commit in log.commits %}
+      <li>
+        <a href="{{ commit.html_url }}">{{ commit.short_sha }}</a>
+        - {{ commit.message }}
+        - {{ commit.author }}
+        - {{ commit.date }}
+      </li>
+      {%- endfor %}
+    </ul>
+  </div>
+  {%- endfor %}
+  {%- endif %}
+</body>
+</html>
+"#;

@@ -16,8 +16,8 @@ const AUTHOR_COLOR_POOL: [TableColor; 6] = [
 
 const COMMIT_MESSAGE_MAX_LENGTH: usize = 80;
 
-pub fn get_commit_logs(
-    logs: Vec<CommitLog>,
+pub fn render_commit_logs(
+    logs: &[CommitLog],
     reference_time: DateTime<Utc>,
     plain_output: bool,
 ) -> String {
@@ -100,12 +100,12 @@ mod tests {
     use chrono::TimeZone;
 
     #[test]
-    fn rendering_commit_logs_works() {
+    fn rendering_plain_commit_logs_works() {
         // GIVEN
         let reference = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
 
         // WHEN
-        let result = get_commit_logs(get_result_and_commit_logs().1, reference, true);
+        let result = render_commit_logs(&get_result_and_commit_logs().1, reference, true);
 
         // THEN
         insta::assert_snapshot!(result, @r"
@@ -150,7 +150,7 @@ mod tests {
         };
 
         // WHEN
-        let result = get_commit_logs(vec![log], reference, true);
+        let result = render_commit_logs(&[log], reference, true);
 
         // THEN
         insta::assert_snapshot!(result, @r"

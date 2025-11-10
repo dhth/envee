@@ -38,7 +38,7 @@ async fn main() -> anyhow::Result<()> {
             only_validate_versions,
             app_filter,
         } => {
-            // VALIDATIONS
+            // READ AND VALIDATE INPUT
             let maybe_token = if no_commit_logs || only_validate_versions {
                 None
             } else {
@@ -56,15 +56,29 @@ async fn main() -> anyhow::Result<()> {
                 .transpose()
                 .context("invalid regex pattern provided")?;
 
-            let html_template = if let Some(ref template_path) = html_template_path {
-                std::fs::read_to_string(template_path).with_context(|| {
-                    format!("failed to read HTML template from {:?}", template_path)
-                })?
-            } else {
-                view::BUILT_IN_TEMPLATE.to_string()
-            };
+            let config = Config {
+                output_type: match output_format {
+                    OutputFormat::Stdout => OutputType::Stdout(StdoutConfig {
+                        table_style,
+                        plain_output,
+                    }),
+                    OutputFormat::Html => {
+                        let template = if let Some(ref template_path) = html_template_path {
+                            std::fs::read_to_string(template_path).with_context(|| {
+                                format!("failed to read HTML template from {:?}", template_path)
+                            })?
+                        } else {
+                            view::BUILT_IN_TEMPLATE.to_string()
+                        };
 
-            // VALIDATIONS END
+                        OutputType::Html(HtmlConfig {
+                            output_path: html_output_path,
+                            title: html_title,
+                            template,
+                        })
+                    }
+                },
+            };
 
             let versions = versions::get_from_file(&versions_file_path, app_filter.as_ref())?;
 
@@ -73,69 +87,44 @@ async fn main() -> anyhow::Result<()> {
                 return Ok(());
             }
 
-            let result = service::get_diff_result(versions.envs.clone(), &versions.versions);
+            // GET RESULTS
+            let diff_result = service::get_diff_result(versions.envs.clone(), &versions.versions);
 
-            let config = Config {
-                output_type: match output_format {
-                    OutputFormat::Stdout => OutputType::Stdout(StdoutConfig {
-                        table_style,
-                        plain_output,
-                    }),
-                    OutputFormat::Html => OutputType::Html(HtmlConfig {
-                        output_path: html_output_path,
-                        title: html_title,
-                    }),
-                },
-            };
-
-            match &config.output_type {
-                OutputType::Stdout(stdout_config) => {
-                    println!("{}", view::render_results_table(&result, stdout_config));
-
-                    if no_commit_logs {
-                        return Ok(());
-                    }
-                }
-                OutputType::Html(_) => {}
-            }
-
-            let commit_logs = if no_commit_logs {
-                vec![]
+            let commit_log_results = if no_commit_logs {
+                None
             } else {
                 let token =
                     maybe_token.with_context(|| format!("{ENV_VAR_GH_TOKEN} is not set"))?;
-                service::fetch_commit_logs(&result, &versions, &token).await
+                Some(service::fetch_commit_logs(&diff_result, &versions, &token).await)
             };
 
-            let now = Utc::now();
+            // DISPLAY OUTPUT
+            let output = view::render_output(
+                &diff_result,
+                commit_log_results.as_ref(),
+                &config,
+                Utc::now(),
+            )?;
 
             match &config.output_type {
-                OutputType::Stdout(stdout_config) => {
-                    if !commit_logs.is_empty() {
-                        println!(
-                            "\n{}",
-                            view::get_commit_logs(commit_logs, now, stdout_config.plain_output)
-                        );
-                    }
+                OutputType::Stdout(_) => {
+                    println!("{}", output);
                 }
                 OutputType::Html(html_config) => {
-                    let html = view::render_html(
-                        &result,
-                        &commit_logs,
-                        &html_template,
-                        &html_config.title,
-                        now,
-                    )?;
-
-                    std::fs::write(&html_config.output_path, html).with_context(|| {
+                    std::fs::write(&html_config.output_path, output).with_context(|| {
                         format!("failed to write HTML to {:?}", html_config.output_path)
                     })?;
-
                     println!(
                         "HTML report written to: {}",
                         html_config.output_path.display()
                     );
                 }
+            }
+
+            if let Some(results) = commit_log_results
+                && !results.errors.is_empty()
+            {
+                return Err(results.errors.into());
             }
         }
     }

@@ -16,7 +16,6 @@ impl std::fmt::Display for OutputFormat {
     }
 }
 
-#[allow(unused)]
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]
 pub enum TableStyle {
     Ascii,
@@ -46,6 +45,7 @@ pub struct StdoutConfig {
 pub struct HtmlConfig {
     pub output_path: PathBuf,
     pub title: String,
+    pub template: String,
 }
 
 #[derive(Debug, Clone)]
