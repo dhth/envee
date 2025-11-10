@@ -460,6 +460,7 @@ fn fails_if_provided_with_absent_html_template_file() {
         "run",
         "--html-template",
         "tests/assets/absent.html",
+        "--no-commit-logs",
         "--output-format",
         "html",
         "--versions",
