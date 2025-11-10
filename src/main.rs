@@ -28,15 +28,15 @@ async fn main() -> anyhow::Result<()> {
     match args.command {
         args::EnveeCommand::Run {
             versions_file_path,
+            only_validate_versions,
             no_commit_logs,
             output_format,
-            table_style,
-            plain_output,
+            app_filter,
+            stdout_table_style,
+            stdout_plain_output,
             html_output_path,
             html_title,
             html_template_path,
-            only_validate_versions,
-            app_filter,
         } => {
             // READ AND VALIDATE INPUT
             let maybe_token = if no_commit_logs || only_validate_versions {
@@ -59,8 +59,8 @@ async fn main() -> anyhow::Result<()> {
             let config = Config {
                 output_type: match output_format {
                     OutputFormat::Stdout => OutputType::Stdout(StdoutConfig {
-                        table_style,
-                        plain_output,
+                        table_style: stdout_table_style,
+                        plain_output: stdout_plain_output,
                     }),
                     OutputFormat::Html => {
                         let template = if let Some(ref template_path) = html_template_path {

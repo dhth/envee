@@ -28,18 +28,24 @@ pub enum EnveeCommand {
             default_value = "versions.toml"
         )]
         versions_file_path: PathBuf,
+        /// Only validate versions file
+        #[arg(long = "validate-only")]
+        only_validate_versions: bool,
         /// Show commits between tags corresponding to different environments (requires ENVEE_GH_TOKEN to be set)
         #[arg(long = "no-commit-logs", short = 'C')]
         no_commit_logs: bool,
         /// Output format
         #[arg(long = "output-format", short = 'o', default_value_t = OutputFormat::Stdout, value_name = "FORMAT")]
         output_format: OutputFormat,
-        /// Output table style (for stdout output)
-        #[arg(long = "table-style", short='s', default_value_t = TableStyle::Utf8, value_name="STRING")]
-        table_style: TableStyle,
+        /// Regex to use for filtering apps
+        #[arg(long = "filter", short = 'f', value_name = "REGEX")]
+        app_filter: Option<String>,
+        /// Table style for stdout output
+        #[arg(long = "stdout-table-style", default_value_t = TableStyle::Utf8, value_name="STRING")]
+        stdout_table_style: TableStyle,
         /// Whether to use output text to stdout without color
-        #[arg(long = "plain", short = 'p')]
-        plain_output: bool,
+        #[arg(long = "stdout-plain")]
+        stdout_plain_output: bool,
         /// Path for the HTML output file
         #[arg(
             long = "html-output",
@@ -47,18 +53,12 @@ pub enum EnveeCommand {
             default_value = "envee-report.html"
         )]
         html_output_path: PathBuf,
-        /// Title for HTML report (for html output)
+        /// Title for HTML report
         #[arg(long = "html-title", value_name = "STRING", default_value = "envee")]
         html_title: String,
         /// Path to custom HTML template file
         #[arg(long = "html-template", value_name = "PATH")]
         html_template_path: Option<PathBuf>,
-        /// Only validate versions file
-        #[arg(long = "validate-only")]
-        only_validate_versions: bool,
-        /// Regex to use for filtering apps
-        #[arg(long = "filter", short = 'f', value_name = "REGEX")]
-        app_filter: Option<String>,
     },
 }
 
@@ -67,47 +67,59 @@ impl std::fmt::Display for Args {
         let output = match &self.command {
             EnveeCommand::Run {
                 versions_file_path,
+                only_validate_versions,
                 no_commit_logs,
                 output_format,
-                table_style,
-                plain_output,
+                app_filter,
+                stdout_table_style,
+                stdout_plain_output,
                 html_output_path,
                 html_title,
                 html_template_path,
-                only_validate_versions,
-                app_filter,
             } => {
-                let output_format_str = match output_format {
-                    OutputFormat::Stdout => "stdout",
-                    OutputFormat::Html => "html",
+                let flags_based_on_output = match output_format {
+                    OutputFormat::Stdout => format!(
+                        r#"
+table style:                          {}
+plain output:                         {}
+"#,
+                        stdout_table_style, stdout_plain_output
+                    ),
+                    OutputFormat::Html => {
+                        format!(
+                            r#"
+output path:                          {}
+title:                                {}
+template path:                        {}
+"#,
+                            html_output_path.to_string_lossy(),
+                            html_title,
+                            html_template_path
+                                .as_ref()
+                                .map(|p| p.to_string_lossy().to_string())
+                                .unwrap_or(NOT_PROVIDED.to_string())
+                        )
+                    }
                 };
+
                 format!(
                     r#"
 command:                              Run
 versions file:                        {}
+only validate versions file:          {}
 don't show commit logs:               {}
 output format:                        {}
-table style:                          {}
-plain output:                         {}
-html output path:                     {}
-html title:                           {}
-html template path:                   {}
-only validate versions file:          {}
-app filter:                           {}
+app filter:                           {}{}
 "#,
                     versions_file_path.to_string_lossy(),
-                    no_commit_logs,
-                    output_format_str,
-                    table_style,
-                    plain_output,
-                    html_output_path.to_string_lossy(),
-                    html_title,
-                    html_template_path
-                        .as_ref()
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or(NOT_PROVIDED.to_string()),
                     only_validate_versions,
+                    no_commit_logs,
+                    match output_format {
+                        OutputFormat::Stdout => "stdout",
+                        OutputFormat::Html => "html",
+                    },
                     app_filter.as_deref().unwrap_or(NOT_PROVIDED),
+                    flags_based_on_output
                 )
             }
         };
