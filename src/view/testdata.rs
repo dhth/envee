@@ -1,4 +1,4 @@
-use crate::domain::{AppResult, Author, Commit, CommitDetail, CommitLog, DiffResult};
+use crate::domain::{AppResult, Author, Commit, CommitDetail, CommitLog, DiffResult, SyncStatus};
 use chrono::{TimeZone, Utc};
 use std::collections::HashMap;
 
@@ -21,17 +21,17 @@ pub(super) fn get_result_and_commit_logs() -> (DiffResult, Vec<CommitLog>) {
             AppResult {
                 app: "app-one".into(),
                 values: app1_values,
-                in_sync: false,
+                sync_status: SyncStatus::OutOfSync,
             },
             AppResult {
                 app: "app-two".into(),
                 values: app2_values,
-                in_sync: false,
+                sync_status: SyncStatus::OutOfSync,
             },
             AppResult {
                 app: "app-three".into(),
                 values: app3_values,
-                in_sync: true,
+                sync_status: SyncStatus::InSync,
             },
         ],
     };

@@ -130,18 +130,6 @@ impl TryFrom<RawVersions> for Versions {
     fn try_from(raw: RawVersions) -> Result<Self, Self::Error> {
         let mut errors = VersionsValidationErrors::new();
 
-        let mut version_envs = HashSet::new();
-        let mut versions = Vec::new();
-        for (i, raw_version) in raw.versions.into_iter().enumerate() {
-            match AppVersion::try_from(raw_version) {
-                Ok(app_version) => {
-                    version_envs.insert(app_version.env.clone());
-                    versions.push(app_version);
-                }
-                Err(e) => errors.add_version_error(i, e),
-            }
-        }
-
         if raw.envs.len() < 2 {
             errors.add_top_level_error(format!(
                 "envs array has only {} element{}, need at least 2",
@@ -151,12 +139,30 @@ impl TryFrom<RawVersions> for Versions {
         }
 
         let mut envs = Vec::new();
+        let mut envs_set = HashSet::new();
         for (i, env_str) in raw.envs.into_iter().enumerate() {
             match Env::try_from(env_str) {
-                Ok(env) => envs.push(env),
+                Ok(env) => {
+                    envs.push(env.clone());
+                    envs_set.insert(env);
+                }
                 Err(e) => {
                     errors.add_top_level_error(format!("envs[{}]: {}", i, e));
                 }
+            }
+        }
+
+        let mut version_envs = HashSet::new();
+        let mut versions = Vec::new();
+        for (i, raw_version) in raw.versions.into_iter().enumerate() {
+            match AppVersion::try_from(raw_version) {
+                Ok(app_version) => {
+                    if envs_set.contains(&app_version.env) {
+                        version_envs.insert(app_version.env.clone());
+                        versions.push(app_version);
+                    }
+                }
+                Err(e) => errors.add_version_error(i, e),
             }
         }
 
@@ -270,6 +276,14 @@ impl TryFrom<RawAppVersion> for AppVersion {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SyncStatus {
+    InSync,
+    OutOfSync,
+    NotApplicable,
+}
+
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(serde::Serialize))]
 pub struct DiffResult {
@@ -282,7 +296,7 @@ pub struct DiffResult {
 pub struct AppResult {
     pub app: App,
     pub values: HashMap<Env, Version>,
-    pub in_sync: bool,
+    pub sync_status: SyncStatus,
 }
 
 #[cfg(test)]
@@ -310,6 +324,52 @@ mod tests {
                 RawAppVersion {
                     app: "app-a".to_string(),
                     env: "prod".to_string(),
+                    version: "1.0.0".to_string(),
+                },
+            ],
+        };
+
+        // WHEN
+        let versions = Versions::try_from(raw).expect("result should've been Ok");
+
+        // THEN
+        assert_yaml_snapshot!(versions, @r#"
+        envs:
+          - dev
+          - prod
+        github_org: my-org
+        versions:
+          - app: app-a
+            env: dev
+            version: 1.0.0
+          - app: app-a
+            env: prod
+            version: 1.0.0
+        git_tag_transform: "v{{version}}"
+        "#);
+    }
+
+    #[test]
+    fn versions_with_env_not_in_global_list_are_ignored() {
+        // GIVEN
+        let raw = RawVersions {
+            envs: vec!["dev".to_string(), "prod".to_string()],
+            github_org: "my-org".to_string(),
+            git_tag_transform: Some("v{{version}}".to_string()),
+            versions: vec![
+                RawAppVersion {
+                    app: "app-a".to_string(),
+                    env: "dev".to_string(),
+                    version: "1.0.0".to_string(),
+                },
+                RawAppVersion {
+                    app: "app-a".to_string(),
+                    env: "prod".to_string(),
+                    version: "1.0.0".to_string(),
+                },
+                RawAppVersion {
+                    app: "app-a".to_string(),
+                    env: "not-in-list".to_string(),
                     version: "1.0.0".to_string(),
                 },
             ],
@@ -421,6 +481,38 @@ mod tests {
            - app is empty
            - env is empty
            - version is empty
+        "#);
+    }
+
+    #[test]
+    fn parsing_values_with_envs_not_in_global_list_fails() {
+        // GIVEN
+        let raw = RawVersions {
+            envs: vec!["dev".to_string(), "prod".to_string()],
+            github_org: "my-org".to_string(),
+            git_tag_transform: Some("v{{version}}".to_string()),
+            versions: vec![
+                RawAppVersion {
+                    app: "app-a".to_string(),
+                    env: "not-in-global-list".to_string(),
+                    version: "1.0.0".to_string(),
+                },
+                RawAppVersion {
+                    app: "app-b".to_string(),
+                    env: "not-in-global-list".to_string(),
+                    version: "1.1.0".to_string(),
+                },
+            ],
+        };
+
+        // WHEN
+        let error = Versions::try_from(raw).expect_err("result should've been an error");
+
+        // THEN
+        assert_snapshot!(error.to_string(), @r#"
+        versions config has errors:
+         - env "dev" is not present in any of the versions configured
+         - env "prod" is not present in any of the versions configured
         "#);
     }
 }

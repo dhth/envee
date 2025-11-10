@@ -35,10 +35,12 @@
           </thead>
           <tbody>
             {%- for row in rows %}
-            {%- if row.in_sync %}
+            {%- if row.sync_status == "in_sync" %}
             <tr class="text-[#b8bb26]">
-              {%- else %}
+              {%- elif row.sync_status == "out_of_sync" %}
             <tr class="text-[#fb4934]">
+              {%- else %}
+            <tr class="text-[#928374]">
               {%- endif %}
               {%- for cell in row.data %}
               <td class="px-10 py-2">{{ cell }}</td>

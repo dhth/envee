@@ -1,4 +1,4 @@
-use crate::domain::{CommitLog, DiffResult};
+use crate::domain::{CommitLog, DiffResult, SyncStatus};
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -18,7 +18,7 @@ struct HtmlData {
 #[derive(Serialize)]
 struct HtmlRow {
     data: Vec<String>,
-    in_sync: bool,
+    sync_status: SyncStatus,
 }
 
 #[derive(Serialize)]
@@ -74,7 +74,7 @@ fn build_html_data(
 ) -> HtmlData {
     let mut columns = vec!["app".to_string()];
     columns.extend(diff_result.envs.iter().map(|e| e.to_string()));
-    columns.push("in sync".to_string());
+    columns.push("in-sync".to_string());
 
     let rows: Vec<HtmlRow> = diff_result
         .app_results
@@ -87,16 +87,20 @@ fn build_html_data(
                     .values
                     .get(env)
                     .map(|v| v.to_string())
-                    .unwrap_or_else(|| "-".to_string());
+                    .unwrap_or_default();
                 row_data.push(version_str);
             }
 
-            let in_sync_str = if app_result.in_sync { "✓" } else { "✗" };
-            row_data.push(in_sync_str.to_string());
+            let sync_status_str = match app_result.sync_status {
+                SyncStatus::InSync => "✓",
+                SyncStatus::OutOfSync => "✗",
+                SyncStatus::NotApplicable => "-",
+            };
+            row_data.push(sync_status_str.to_string());
 
             HtmlRow {
                 data: row_data,
-                in_sync: app_result.in_sync,
+                sync_status: app_result.sync_status.clone(),
             }
         })
         .collect();
@@ -214,7 +218,7 @@ mod tests {
                       <th class="px-10 py-2">app</th>
                       <th class="px-10 py-2">dev</th>
                       <th class="px-10 py-2">prod</th>
-                      <th class="px-10 py-2">in sync</th>
+                      <th class="px-10 py-2">in-sync</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -363,7 +367,7 @@ mod tests {
                 <th>app</th>
                 <th>dev</th>
                 <th>prod</th>
-                <th>in sync</th>
+                <th>in-sync</th>
               </tr>
             </thead>
             <tbody>
@@ -429,5 +433,81 @@ mod tests {
         </body>
         </html>
         "#);
+    }
+
+    #[test]
+    fn html_table_with_not_applicable_state_renders_correctly() {
+        use crate::domain::{AppResult, DiffResult, SyncStatus};
+        use std::collections::HashMap;
+
+        // GIVEN
+        let mut app1_values = HashMap::new();
+        app1_values.insert("dev".into(), "1.0.0".into());
+        app1_values.insert("prod".into(), "1.0.0".into());
+
+        let mut app2_values = HashMap::new();
+        app2_values.insert("dev".into(), "2.0.0".into());
+
+        let diff_result = DiffResult {
+            envs: vec!["dev", "prod"].into_iter().map(Into::into).collect(),
+            app_results: vec![
+                AppResult {
+                    app: "multi-env-app".into(),
+                    values: app1_values,
+                    sync_status: SyncStatus::InSync,
+                },
+                AppResult {
+                    app: "single-env-app".into(),
+                    values: app2_values,
+                    sync_status: SyncStatus::NotApplicable,
+                },
+            ],
+        };
+
+        let commit_logs = vec![];
+        let now = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
+
+        // WHEN
+        let html = render_html(&diff_result, &commit_logs, TEST_HTML_TEMPLATE, "test", now)
+            .expect("result should've been Ok");
+
+        // THEN - Extract just the table portion for easier testing
+        insta::assert_snapshot!(html, @r"
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>test</title>
+        </head>
+        <body>
+          <h1>test</h1>
+          <p>Generated: 2025-01-16T12:00:00Z</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>app</th>
+                <th>dev</th>
+                <th>prod</th>
+                <th>in-sync</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>multi-env-app</td>
+                <td>1.0.0</td>
+                <td>1.0.0</td>
+                <td>✓</td>
+              </tr>
+              <tr>
+                <td>single-env-app</td>
+                <td>2.0.0</td>
+                <td></td>
+                <td>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </body>
+        </html>
+        ");
     }
 }
