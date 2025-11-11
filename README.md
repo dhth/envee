@@ -90,7 +90,7 @@ Options:
 
 By default, `envee` prints its report to stdout.
 
-[![stdout output](https://asciinema.org/a/CsmCGutoiRtZ5gh79g1RrYXLL.svg)](https://asciinema.org/a/CsmCGutoiRtZ5gh79g1RrYXLL)
+[![stdout output](https://asciinema.org/a/iNdyYpBfYPxAhwPliICxjLMAY.svg)](https://asciinema.org/a/iNdyYpBfYPxAhwPliICxjLMAY)
 
 ### HTML output
 
