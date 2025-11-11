@@ -64,11 +64,11 @@ async fn main() -> anyhow::Result<()> {
                     }),
                     OutputFormat::Html => {
                         let template = if let Some(ref template_path) = html_template_path {
-                            std::fs::read_to_string(template_path).with_context(|| {
+                            Some(std::fs::read_to_string(template_path).with_context(|| {
                                 format!("failed to read HTML template from {:?}", template_path)
-                            })?
+                            })?)
                         } else {
-                            view::BUILT_IN_TEMPLATE.to_string()
+                            None
                         };
 
                         OutputType::Html(HtmlConfig {

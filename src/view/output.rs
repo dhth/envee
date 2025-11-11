@@ -31,7 +31,7 @@ pub fn render_output(
             super::render_html(
                 diff_result,
                 commit_logs,
-                &html_config.template,
+                html_config.template.as_deref(),
                 &html_config.title,
                 now,
             )?
@@ -165,7 +165,7 @@ mod tests {
             output_type: OutputType::Html(HtmlConfig {
                 output_path: PathBuf::from("/tmp/output.html"),
                 title: "versions".to_string(),
-                template: TEST_HTML_TEMPLATE.to_string(),
+                template: Some(TEST_HTML_TEMPLATE.to_string()),
             }),
         };
         let now = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
@@ -268,7 +268,7 @@ mod tests {
             output_type: OutputType::Html(HtmlConfig {
                 output_path: PathBuf::from("/tmp/output.html"),
                 title: "versions".to_string(),
-                template: TEST_HTML_TEMPLATE.to_string(),
+                template: Some(TEST_HTML_TEMPLATE.to_string()),
             }),
         };
         let now = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();

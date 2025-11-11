@@ -45,7 +45,7 @@ pub struct StdoutConfig {
 pub struct HtmlConfig {
     pub output_path: PathBuf,
     pub title: String,
-    pub template: String,
+    pub template: Option<String>,
 }
 
 #[derive(Debug, Clone)]

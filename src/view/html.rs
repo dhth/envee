@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use serde::Serialize;
 use tera::Tera;
 
-pub const BUILT_IN_TEMPLATE: &str = include_str!("assets/template.html");
+const BUILT_IN_TEMPLATE: &str = include_str!("assets/template.html");
 
 #[derive(Serialize)]
 struct HtmlData {
@@ -44,14 +44,20 @@ struct HtmlCommit {
 pub fn render_html(
     diff_result: &DiffResult,
     commit_logs: &[CommitLog],
-    template: &str,
+    custom_template: Option<&str>,
     title: &str,
     now: DateTime<Utc>,
 ) -> Result<String> {
     let mut tera = Tera::default();
 
-    tera.add_raw_template("html", template)
-        .context("failed to parse HTML template")?;
+    match custom_template {
+        Some(template) => tera
+            .add_raw_template("html", template)
+            .context("failed to parse HTML template")?,
+        None => tera
+            .add_raw_template("html", BUILT_IN_TEMPLATE)
+            .context("failed to parse built-in HTML template")?,
+    }
 
     let html_data = build_html_data(diff_result, commit_logs, title, now);
 
@@ -174,14 +180,8 @@ mod tests {
         let now = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
 
         // WHEN
-        let html = render_html(
-            &diff_result,
-            &commit_logs,
-            BUILT_IN_TEMPLATE,
-            "versions",
-            now,
-        )
-        .expect("result should've been Ok");
+        let html = render_html(&diff_result, &commit_logs, None, "versions", now)
+            .expect("result should've been Ok");
 
         // THEN
         insta::assert_snapshot!(html, @r#"
@@ -191,7 +191,7 @@ mod tests {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-            <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACn0lEQVR4AWRTTUhUURT+zn0TmWWGZGirakZaCDMoaKFEDI2B/RGBIkK7CFdF0iKLcJBqVkXboDatRGkhBFFqrqIfgnIiIpvRFlEJEs0EJs577/Td+zSCztx77jnfOd859x7eGKyL/GcAxISq2JJpWkhmXhVTmW/FVNd5EUTC0/x11GJExBkgD1DrAwhwPRS00W9Q1dtzyUNDRLkERl0mnAiUJGeunYonu1trV4MgCZensA2NmhuFZOYSVGGscigobAgIf1YD0zta497v8NlS+dfeIAgBG1FQnMrNpw6fi2bASmBwLtnVUkxlHhZSmQfPd3WeNp6+YIPmiu9j8WcZYRjaO2JdFOGQEecJoqthnO5RZp2q27LxvhfztrsABJXAx/dSiUVcd6a59cXYOTGOQIdpayM7wvqeMWjcthWxmIdIFBU/wGKpjFU/+MiG4xDp5wwYZlEP2VA0vEaPF7AajBs01LKIZ4sIrFR8/32pstwen53ujb+d/BTNwFIYT+Rncqw1IhDm2g14JDfYm/AkuLQh9E7sL7wsw3IIrM2ALplKcObKhdGFjraVqIYwReEZD7ZIddWmwQOLr+cRBcFn2O8AgM0DcG/scV1oMFFMd1Z97mhfERYkTG2LGNTXbD5pfTcni7KpESGbRjb7NBagMkq8CaKF+YMdrbRH4KbMG1qm6EZ7/LujIbLGzuaVnIp0cSiTnsb2ne079iGenxoGwssiskxSMQSuMpUm3KWtbRSKO2OPeviND2qoN7/WVx8509v9w+KgJN5N5/bMdtYk8lOJpvzUG7UsRweZgLk7NpFQhLcgpm+g7/jF4XTa5xNIFW4m8XkiWf6X6NJ2LCpbyGaYEF5/TL30QE/3eDQcwspk0bU+tJnNRYMx4aa1vv4AAAD//7yX0JUAAAAGSURBVAMAgZr8xDcDLw4AAAAASUVORK5CYII=">
+            <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔢</text></svg>">
             <title>versions</title>
             <link rel="preconnect" href="https://fonts.googleapis.com">
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -353,7 +353,7 @@ mod tests {
         let html = render_html(
             &diff_result,
             &commit_logs,
-            TEST_HTML_TEMPLATE,
+            Some(TEST_HTML_TEMPLATE),
             "versions",
             now,
         )
@@ -477,8 +477,14 @@ mod tests {
         let now = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
 
         // WHEN
-        let html = render_html(&diff_result, &commit_logs, TEST_HTML_TEMPLATE, "test", now)
-            .expect("result should've been Ok");
+        let html = render_html(
+            &diff_result,
+            &commit_logs,
+            Some(TEST_HTML_TEMPLATE),
+            "test",
+            now,
+        )
+        .expect("result should've been Ok");
 
         // THEN - Extract just the table portion for easier testing
         insta::assert_snapshot!(html, @r"
