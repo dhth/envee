@@ -215,7 +215,7 @@ mod tests {
             </style>
           </head>
           <body class="bg-[#282828]">
-            <div class="w-2/3 max-sm:w-full max-sm:px-4 mx-auto min-h-screen pt-8">
+            <div class="w-4/5 max-sm:w-full max-sm:px-4 mx-auto min-h-screen pt-8">
               <h1 class="text-[#fbf1c7] text-3xl mb-4 font-semibold">
                 versions
               </h1>
