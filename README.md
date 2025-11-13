@@ -27,7 +27,10 @@ and commit logs in one place.
 ⚡️ Usage
 ---
 
-`envee` requires a TOML file which holds data for the app versions.
+`envee` requires a TOML file which holds data for the app versions. You will
+most likely need to tap into your CICD system/GitOps repo to generate this file
+(we use a GitOps repo at work, so I pull the versions from it using a simple
+Python script).
 
 ```toml
 # array of environments in the order you would like to see them in the results
