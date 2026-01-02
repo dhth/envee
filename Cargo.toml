@@ -27,7 +27,7 @@ comfy-table = "7.2.1"
 derive_more = { version = "2.1.1", features = ["deref", "display"] }
 futures = "0.3.31"
 regex = "1.12.2"
-reqwest = { version = "0.12.24", features = ["json"] }
+reqwest = { version = "0.13.1", features = ["json"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.148"
 tera = "1.20.1"
