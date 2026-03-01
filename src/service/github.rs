@@ -197,7 +197,7 @@ mod tests {
         assert_eq!(build_tag("{{version}}", "2.0.0"), "2.0.0");
         assert_eq!(
             build_tag("v{{version}}-{{version}}", "2.0.0"),
-            "v2.0.0-{{version}}
+            "v2.0.0-{{version}}"
         );
     }
 }
