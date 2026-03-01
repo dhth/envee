@@ -74,7 +74,7 @@ pub async fn fetch_commit_logs(
             if let Err(e) = permit {
                 return (
                     app_clone,
-                    Err(anyhow::anyhow!("couldn't acquire semaphore: {{e}}")),
+                    Err(anyhow::anyhow!("couldn't acquire semaphore: {e}")),
                 );
             }
 
@@ -104,7 +104,7 @@ pub async fn fetch_commit_logs(
                 errors.add_app_error(app, e);
             }
             Err(e) => {
-                errors.add_system_error(anyhow::anyhow!("task panicked: {{e}}"));
+                errors.add_system_error(anyhow::anyhow!("task panicked: {e}"));
             }
         }
     }
@@ -147,7 +147,7 @@ pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<Co
     let response = client
         .get(&url)
         .header("Accept", "application/vnd.github+json")
-        .header("Authorization", format!("Bearer {{}}", params.token))
+        .header("Authorization", format!("Bearer {}", params.token))
         .header("X-GitHub-Api-Version", "2022-11-28")
         .header("User-Agent", "envee@v0.1.0")
         .send()
@@ -158,7 +158,7 @@ pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<Co
     if !status.is_success() {
         let error_body = response.text().await.unwrap_or_default();
         anyhow::bail!(
-            "GitHub API request failed with status {}: {{}}",
+            "GitHub API request failed with status {}: {}",
             status,
             error_body
         );
@@ -195,6 +195,9 @@ mod tests {
         assert_eq!(build_tag("v{{version}}", "0.83.0"), "v0.83.0");
         assert_eq!(build_tag("release-{{version}}", "1.2.3"), "release-1.2.3");
         assert_eq!(build_tag("{{version}}", "2.0.0"), "2.0.0");
-        assert_eq!(build_tag("v{{version}}-{{version}}", "2.0.0"), "v2.0.0-{{version}});
+        assert_eq!(
+            build_tag("v{{version}}-{{version}}", "2.0.0"),
+            "v2.0.0-{{version}}
+        );
     }
 }
