@@ -136,7 +136,7 @@ pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<Co
 
     let api_url = get_github_api_url();
     let url = format!(
-        "{}/repos/{}/{}/compare/...{}",
+        "{}/repos/{}/{}/compare/{}...{}",
         api_url, &params.github_org, &params.app, base_tag, head_tag
     );
 
