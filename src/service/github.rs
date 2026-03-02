@@ -189,6 +189,35 @@ fn build_tag(template: &str, version: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
+
+    #[test]
+    fn test_get_github_api_url_with_env_var() {
+        let custom_url = "https://custom.github.api";
+
+        unsafe {
+            env::set_var("GITHUB_API_URL", custom_url);
+        }
+
+        let result = get_github_api_url();
+
+        // Clean up immediately to avoid leaking state to other tests
+        unsafe {
+            env::remove_var("GITHUB_API_URL");
+        }
+
+        assert_eq!(result, custom_url);
+    }
+
+    #[test]
+    fn test_get_github_api_url_default() {
+        // Ensure the variable is NOT set
+        unsafe {
+            env::remove_var("GITHUB_API_URL");
+        }
+
+        assert_eq!(get_github_api_url(), DEFAULT_GITHUB_API_URL);
+    }
 
     #[test]
     fn building_tag_works() {
