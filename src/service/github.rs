@@ -9,6 +9,7 @@ use std::sync::Arc;
 use tokio::sync::Semaphore;
 
 const MAX_CONCURRENT_FETCHES: usize = 20;
+const DEFAULT_GITHUB_API_URL: &str = "https://api.github.com";
 
 pub struct FetchCommitLogParams {
     pub github_org: GithubOrg,
@@ -116,6 +117,10 @@ pub async fn fetch_commit_logs(
     }
 }
 
+fn get_github_api_url() -> String {
+    std::env::var("GITHUB_API_URL").unwrap_or_else(|_| DEFAULT_GITHUB_API_URL.to_string())
+}
+
 pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<CommitLog> {
     let base_tag = if let Some(ref template) = params.tag_transform {
         build_tag(template, &params.from_version)
@@ -129,9 +134,10 @@ pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<Co
         params.to_version.to_string()
     };
 
+    let api_url = get_github_api_url();
     let url = format!(
-        "https://api.github.com/repos/{}/{}/compare/{}...{}",
-        &params.github_org, &params.app, base_tag, head_tag
+        "{}/repos/{}/{}/compare/{}...{}",
+        api_url, &params.github_org, &params.app, base_tag, head_tag
     );
 
     let client = reqwest::Client::builder()
@@ -183,6 +189,35 @@ fn build_tag(template: &str, version: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::env;
+
+    #[test]
+    fn test_get_github_api_url_with_env_var() {
+        let custom_url = "https://custom.github.api";
+
+        unsafe {
+            env::set_var("GITHUB_API_URL", custom_url);
+        }
+
+        let result = get_github_api_url();
+
+        // Clean up immediately to avoid leaking state to other tests
+        unsafe {
+            env::remove_var("GITHUB_API_URL");
+        }
+
+        assert_eq!(result, custom_url);
+    }
+
+    #[test]
+    fn test_get_github_api_url_default() {
+        // Ensure the variable is NOT set
+        unsafe {
+            env::remove_var("GITHUB_API_URL");
+        }
+
+        assert_eq!(get_github_api_url(), DEFAULT_GITHUB_API_URL);
+    }
 
     #[test]
     fn building_tag_works() {
