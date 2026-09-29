@@ -85,6 +85,7 @@ Options:
       --stdout-plain                 Whether to use output text to stdout without color
       --html-output <PATH>           Path for the HTML output file [default: envee-report.html]
       --html-title <STRING>          Title for HTML report [default: envee]
+      --html-heading-link <URL>      Link destination for the HTML report heading
       --html-template <PATH>         Path to custom HTML template file
   -h, --help                         Print help
 ```
