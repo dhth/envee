@@ -224,7 +224,7 @@ mod tests {
                     </h1>
                     <p class="text-[#928374] italic mt-4">Generated at 2025-01-16T12:00:00Z</p>
                     <div class="flex justify-end mt-2">
-                        <button type="button" class="text-[#928374] text-xs px-2 py-1 hover:text-[#fbf1c7] focus-visible:outline focus-visible:outline-[#83a598]" onclick="copyDiff(this)" aria-label="Copy diff to clipboard">Copy diff</button>
+                        <button type="button" class="text-[#928374] text-xs px-2 py-1 hover:text-[#fbf1c7] focus-visible:outline focus-visible:outline-[#83a598]" onclick="copySection(this)" aria-label="Copy results table to clipboard">Copy</button>
                     </div>
                     <div class="mt-2 overflow-x-auto diff-table">
                         <table class="table-auto w-full text-right max-sm:text-xs font-semibold whitespace-nowrap">
@@ -270,7 +270,10 @@ mod tests {
                                 <summary class="text-[#83a598] cursor-pointer max-sm:text-sm">app-one</summary>
                                 <div class="mt-2 max-sm:p-2 p-4 bg-[#2e2c2c] changes-section max-sm:text-xs text-sm">
                                     <div class="flex flex-col items-left gap-4 overflow-x-auto">
-                                        <a class="text-[#928374]" href="https://github.com/org/app-one/compare/1.0.0...1.1.0" target="_blank">prod..dev (1.0.0...1.1.0)</a>
+                                        <div class="flex justify-between items-center gap-4">
+                                            <a class="text-[#928374]" href="https://github.com/org/app-one/compare/1.0.0...1.1.0" target="_blank">prod..dev (1.0.0...1.1.0)</a>
+                                            <button type="button" class="ml-auto text-[#928374] text-xs px-2 py-1 hover:text-[#fbf1c7] focus-visible:outline focus-visible:outline-[#83a598]" onclick="copySection(this)" aria-label="Copy app-one commit log to clipboard">Copy</button>
+                                        </div>
                                         <table class="w-full text-left max-sm:text-xs text-sm whitespace-nowrap">
                                             <tbody>
                                                 <tr class="">
@@ -290,7 +293,10 @@ mod tests {
                                 <summary class="text-[#83a598] cursor-pointer max-sm:text-sm">app-two</summary>
                                 <div class="mt-2 max-sm:p-2 p-4 bg-[#2e2c2c] changes-section max-sm:text-xs text-sm">
                                     <div class="flex flex-col items-left gap-4 overflow-x-auto">
-                                        <a class="text-[#928374]" href="https://github.com/org/app-two/compare/2.0.0...2.1.0" target="_blank">prod..dev (2.0.0...2.1.0)</a>
+                                        <div class="flex justify-between items-center gap-4">
+                                            <a class="text-[#928374]" href="https://github.com/org/app-two/compare/2.0.0...2.1.0" target="_blank">prod..dev (2.0.0...2.1.0)</a>
+                                            <button type="button" class="ml-auto text-[#928374] text-xs px-2 py-1 hover:text-[#fbf1c7] focus-visible:outline focus-visible:outline-[#83a598]" onclick="copySection(this)" aria-label="Copy app-two commit log to clipboard">Copy</button>
+                                        </div>
                                         <table class="w-full text-left max-sm:text-xs text-sm whitespace-nowrap">
                                             <tbody>
                                                 <tr class="">
@@ -337,16 +343,23 @@ mod tests {
                     });
                 }
 
-                async function copyDiff(button) {
-                    const rows = Array.from(document.querySelector(".diff-table table").rows, (row) =>
+                async function copySection(button) {
+                    const section = button.closest(".commit-log");
+                    const table = section ? section.querySelector("table") : document.querySelector(".diff-table table");
+                    const heading = section ? [
+                        section.querySelector("summary").textContent.trim(),
+                        section.querySelector(".changes-section a")?.textContent.trim(),
+                    ].filter(Boolean) : [];
+                    const rows = Array.from(table?.rows ?? [], (row) =>
                         Array.from(row.cells, (cell) => cell.textContent.trim())
                     );
-                    const widths = rows[0].map((_, column) =>
+                    const widths = (rows[0] ?? []).map((_, column) =>
                         Math.max(...rows.map((row) => Array.from(row[column]).length))
                     );
-                    const text = rows.map((row) =>
-                        row.map((cell, column) => cell.padStart(widths[column])).join("  ")
-                    ).join("\n");
+                    const lines = rows.map((row) =>
+                        row.map((cell, column) => section ? cell.padEnd(widths[column]) : cell.padStart(widths[column])).join("  ").trimEnd()
+                    );
+                    const text = [...heading, ...lines].join("\n");
 
                     try {
                         await navigator.clipboard.writeText(text);
@@ -354,7 +367,7 @@ mod tests {
                     } catch {
                         button.textContent = "Copy failed";
                     }
-                    setTimeout(() => { button.textContent = "Copy diff"; }, 2000);
+                    setTimeout(() => { button.textContent = "Copy"; }, 2000);
                 }
                 
                 window.addEventListener("scroll", function () {
