@@ -4,33 +4,113 @@ use crate::domain::{
 };
 use anyhow::Context;
 use futures::stream::{FuturesUnordered, StreamExt};
+use reqwest::header::{ACCEPT, AUTHORIZATION, HeaderMap, HeaderValue};
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
 const MAX_CONCURRENT_FETCHES: usize = 20;
+const DEFAULT_API_URL: &str = "https://api.github.com";
 
-pub struct FetchCommitLogParams {
-    pub github_org: GithubOrg,
-    pub app: App,
-    pub from_env: Env,
-    pub to_env: Env,
-    pub from_version: Version,
-    pub to_version: Version,
-    pub token: String,
-    pub tag_transform: Option<GitTagTransform>,
+#[derive(Clone)]
+pub struct GitHubClient {
+    http: reqwest::Client,
+    api_url: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct CompareResponse {
-    commits: Vec<Commit>,
-    html_url: String,
+impl GitHubClient {
+    pub fn new(api_url: Option<String>, token: &str) -> anyhow::Result<Self> {
+        let api_url = match api_url {
+            Some(value) => {
+                let value = value.trim();
+                anyhow::ensure!(!value.is_empty(), "GitHub API base URL must not be empty");
+                value.trim_end_matches('/').to_string()
+            }
+            None => DEFAULT_API_URL.to_string(),
+        };
+
+        let mut authorization = HeaderValue::from_str(&format!("Bearer {token}"))
+            .context("invalid GitHub authorization header")?;
+        authorization.set_sensitive(true);
+
+        let mut headers = HeaderMap::new();
+        headers.insert(AUTHORIZATION, authorization);
+        headers.insert(
+            ACCEPT,
+            HeaderValue::from_static("application/vnd.github+json"),
+        );
+        headers.insert(
+            "X-GitHub-Api-Version",
+            HeaderValue::from_static("2022-11-28"),
+        );
+
+        let http = reqwest::Client::builder()
+            .default_headers(headers)
+            .user_agent("envee@v0.1.0")
+            .build()
+            .context("failed to build GitHub HTTP client")?;
+
+        Ok(Self { http, api_url })
+    }
+
+    async fn fetch_commit_log(&self, params: FetchCommitLogParams) -> anyhow::Result<CommitLog> {
+        let base_tag = if let Some(ref template) = params.tag_transform {
+            build_tag(template, &params.from_version)
+        } else {
+            params.from_version.to_string()
+        };
+
+        let head_tag = if let Some(ref template) = params.tag_transform {
+            build_tag(template, &params.to_version)
+        } else {
+            params.to_version.to_string()
+        };
+
+        let url = format!(
+            "{}/repos/{}/{}/compare/{}...{}",
+            self.api_url, params.github_org, params.app, base_tag, head_tag
+        );
+
+        let response = self
+            .http
+            .get(&url)
+            .send()
+            .await
+            .context("failed to send request to GitHub API")?;
+
+        let status = response.status();
+        if !status.is_success() {
+            let error_body = response.text().await.unwrap_or_default();
+            anyhow::bail!(
+                "GitHub API request failed with status {}: {}",
+                status,
+                error_body
+            );
+        }
+
+        let mut compare_response: CompareResponse = response
+            .json()
+            .await
+            .context("failed to parse GitHub API response")?;
+
+        compare_response.commits.reverse();
+
+        Ok(CommitLog {
+            app: params.app,
+            from_env: params.from_env,
+            to_env: params.to_env,
+            from_version: params.from_version,
+            to_version: params.to_version,
+            commits: compare_response.commits,
+            html_url: compare_response.html_url,
+        })
+    }
 }
 
 pub async fn fetch_commit_logs(
+    client: &GitHubClient,
     diff_result: &DiffResult,
     versions: &Versions,
-    token: &str,
 ) -> CommitLogResults {
     let out_of_sync: Vec<_> = diff_result
         .app_results
@@ -53,7 +133,7 @@ pub async fn fetch_commit_logs(
         let github_org = versions.github_org.clone();
         let app = row.app.clone();
         let tag_transform = versions.git_tag_transform.clone();
-        let token = token.to_string();
+        let client = client.clone();
 
         let from_env = diff_result.envs[diff_result.envs.len() - 1].clone();
         let to_env = diff_result.envs[0].clone();
@@ -77,17 +157,17 @@ pub async fn fetch_commit_logs(
                 );
             }
 
-            let result = fetch_commit_log(FetchCommitLogParams {
-                github_org,
-                app,
-                from_env,
-                to_env,
-                from_version,
-                to_version,
-                token,
-                tag_transform,
-            })
-            .await;
+            let result = client
+                .fetch_commit_log(FetchCommitLogParams {
+                    github_org,
+                    app,
+                    from_env,
+                    to_env,
+                    from_version,
+                    to_version,
+                    tag_transform,
+                })
+                .await;
 
             (app_clone, result)
         }));
@@ -116,64 +196,20 @@ pub async fn fetch_commit_logs(
     }
 }
 
-pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<CommitLog> {
-    let base_tag = if let Some(ref template) = params.tag_transform {
-        build_tag(template, &params.from_version)
-    } else {
-        params.from_version.to_string()
-    };
+struct FetchCommitLogParams {
+    github_org: GithubOrg,
+    app: App,
+    from_env: Env,
+    to_env: Env,
+    from_version: Version,
+    to_version: Version,
+    tag_transform: Option<GitTagTransform>,
+}
 
-    let head_tag = if let Some(ref template) = params.tag_transform {
-        build_tag(template, &params.to_version)
-    } else {
-        params.to_version.to_string()
-    };
-
-    let url = format!(
-        "https://api.github.com/repos/{}/{}/compare/{}...{}",
-        params.github_org, params.app, base_tag, head_tag
-    );
-
-    let client = reqwest::Client::builder()
-        .build()
-        .context("failed to build HTTP client")?;
-
-    let response = client
-        .get(&url)
-        .header("Accept", "application/vnd.github+json")
-        .header("Authorization", format!("Bearer {}", params.token))
-        .header("X-GitHub-Api-Version", "2022-11-28")
-        .header("User-Agent", "envee@v0.1.0")
-        .send()
-        .await
-        .context("failed to send request to GitHub API")?;
-
-    let status = response.status();
-    if !status.is_success() {
-        let error_body = response.text().await.unwrap_or_default();
-        anyhow::bail!(
-            "GitHub API request failed with status {}: {}",
-            status,
-            error_body
-        );
-    }
-
-    let mut compare_response: CompareResponse = response
-        .json()
-        .await
-        .context("failed to parse GitHub API response")?;
-
-    compare_response.commits.reverse();
-
-    Ok(CommitLog {
-        app: params.app,
-        from_env: params.from_env,
-        to_env: params.to_env,
-        from_version: params.from_version,
-        to_version: params.to_version,
-        commits: compare_response.commits,
-        html_url: compare_response.html_url,
-    })
+#[derive(Debug, Deserialize)]
+struct CompareResponse {
+    commits: Vec<Commit>,
+    html_url: String,
 }
 
 fn build_tag(template: &str, version: &str) -> String {

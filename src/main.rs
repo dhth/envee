@@ -15,6 +15,7 @@ use regex::Regex;
 use std::env::VarError;
 
 const ENV_VAR_GH_TOKEN: &str = "ENVEE_GH_TOKEN";
+const ENV_VAR_GH_API_URL: &str = "ENVEE_GH_API_URL";
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -97,7 +98,9 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 let token =
                     maybe_token.with_context(|| format!("{ENV_VAR_GH_TOKEN} is not set"))?;
-                Some(service::fetch_commit_logs(&diff_result, &versions, &token).await)
+                let api_url = get_env_var(ENV_VAR_GH_API_URL)?;
+                let client = service::GitHubClient::new(api_url, &token)?;
+                Some(service::fetch_commit_logs(&client, &diff_result, &versions).await)
             };
 
             // DISPLAY OUTPUT

@@ -90,6 +90,15 @@ Options:
   -h, --help                         Print help
 ```
 
+### GitHub API configuration
+
+Set `ENVEE_GH_TOKEN` to a GitHub token with access to your repositories to fetch
+commit logs.
+
+If you use GitHub Enterprise Server, you can set `ENVEE_GH_API_URL` to its REST
+API base URL, such as `https://github.example.com/api/v3`. When unset, envee
+uses `https://api.github.com`.
+
 ### stdout output
 
 By default, `envee` prints its report to stdout.
