@@ -223,6 +223,9 @@ mod tests {
                         versions
                     </h1>
                     <p class="text-[#928374] italic mt-4">Generated at 2025-01-16T12:00:00Z</p>
+                    <div class="flex justify-end mt-2">
+                        <button type="button" class="text-[#928374] text-xs px-2 py-1 hover:text-[#fbf1c7] focus-visible:outline focus-visible:outline-[#83a598]" onclick="copyDiff(this)" aria-label="Copy diff to clipboard">Copy diff</button>
+                    </div>
                     <div class="mt-2 overflow-x-auto diff-table">
                         <table class="table-auto w-full text-right max-sm:text-xs font-semibold whitespace-nowrap">
                             <thead>
@@ -332,6 +335,26 @@ mod tests {
                     document.querySelectorAll("details").forEach((detail) => {
                         detail.open = allDetailsOpen;
                     });
+                }
+
+                async function copyDiff(button) {
+                    const rows = Array.from(document.querySelector(".diff-table table").rows, (row) =>
+                        Array.from(row.cells, (cell) => cell.textContent.trim())
+                    );
+                    const widths = rows[0].map((_, column) =>
+                        Math.max(...rows.map((row) => Array.from(row[column]).length))
+                    );
+                    const text = rows.map((row) =>
+                        row.map((cell, column) => cell.padStart(widths[column])).join("  ")
+                    ).join("\n");
+
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        button.textContent = "Copied!";
+                    } catch {
+                        button.textContent = "Copy failed";
+                    }
+                    setTimeout(() => { button.textContent = "Copy diff"; }, 2000);
                 }
                 
                 window.addEventListener("scroll", function () {
