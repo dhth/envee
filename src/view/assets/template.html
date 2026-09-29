@@ -139,7 +139,7 @@
                 Math.max(...rows.map((row) => Array.from(row[column]).length))
             );
             const lines = rows.map((row) =>
-                row.map((cell, column) => section ? cell.padEnd(widths[column]) : cell.padStart(widths[column])).join("  ").trimEnd()
+                row.map((cell, column) => cell.padEnd(widths[column])).join("  ").trimEnd()
             );
             const text = [...heading, ...(section && lines.length ? [""] : []), ...lines].join("\n");
 
