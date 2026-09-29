@@ -7,17 +7,13 @@ pub fn get_from_file<P>(path: P, app_filter: Option<&Regex>) -> anyhow::Result<V
 where
     P: AsRef<Path>,
 {
-    let contents = std::fs::read_to_string(&path).with_context(|| {
-        format!(
-            "couldn't read file \"{}\"",
-            &path.as_ref().to_string_lossy()
-        )
-    })?;
+    let contents = std::fs::read_to_string(&path)
+        .with_context(|| format!("couldn't read file \"{}\"", path.as_ref().to_string_lossy()))?;
 
     let versions = get_versions(&contents, app_filter).with_context(|| {
         format!(
             "couldn't get versions from file \"{}\"",
-            &path.as_ref().to_string_lossy()
+            path.as_ref().to_string_lossy()
         )
     })?;
 
