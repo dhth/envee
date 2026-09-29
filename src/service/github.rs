@@ -131,7 +131,7 @@ pub async fn fetch_commit_log(params: FetchCommitLogParams) -> anyhow::Result<Co
 
     let url = format!(
         "https://api.github.com/repos/{}/{}/compare/{}...{}",
-        &params.github_org, &params.app, base_tag, head_tag
+        params.github_org, params.app, base_tag, head_tag
     );
 
     let client = reqwest::Client::builder()
