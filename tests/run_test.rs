@@ -15,7 +15,7 @@ fn shows_help() {
 
     // WHEN
     // THEN
-    assert_cmd_snapshot!(cmd, @r"
+    assert_cmd_snapshot!(cmd, @"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -34,6 +34,7 @@ fn shows_help() {
           --stdout-plain                 Whether to use output text to stdout without color
           --html-output <PATH>           Path for the HTML output file [default: envee-report.html]
           --html-title <STRING>          Title for HTML report [default: envee]
+          --html-heading-link <URL>      Link destination for the HTML report heading
           --html-template <PATH>         Path to custom HTML template file
       -h, --help                         Print help
 
@@ -125,6 +126,8 @@ fn debug_flag_works_with_overridden_flags_for_html_output() {
         "tests/assets/absent.html",
         "--html-title",
         "versions",
+        "--html-heading-link",
+        "./",
         "--output-format",
         "html",
         "--validate-only",
@@ -134,7 +137,7 @@ fn debug_flag_works_with_overridden_flags_for_html_output() {
 
     // WHEN
     // THEN
-    assert_cmd_snapshot!(cmd, @r"
+    assert_cmd_snapshot!(cmd, @"
     success: true
     exit_code: 0
     ----- stdout -----
@@ -148,6 +151,7 @@ fn debug_flag_works_with_overridden_flags_for_html_output() {
     app filter:                           repo
     output path:                          output.html
     title:                                versions
+    heading link:                         ./
     template path:                        tests/assets/absent.html
 
 
@@ -444,6 +448,26 @@ fn fails_if_no_gh_token_is_provided() {
 
     ----- stderr -----
     Error: ENVEE_GH_TOKEN needs to be set to fetch commit logs from GitHub
+    ");
+}
+
+#[test]
+fn fails_if_provided_with_empty_html_heading_link() {
+    // GIVEN
+    let fx = Fixture::new();
+    let mut cmd = fx.cmd(["run", "--output-format", "html", "--html-heading-link", ""]);
+
+    // WHEN
+    // THEN
+    assert_cmd_snapshot!(cmd, @"
+    success: false
+    exit_code: 2
+    ----- stdout -----
+
+    ----- stderr -----
+    error: a value is required for '--html-heading-link <URL>' but none was supplied
+
+    For more information, try '--help'.
     ");
 }
 

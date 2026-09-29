@@ -46,6 +46,7 @@ pub fn render_html(
     commit_logs: &[CommitLog],
     custom_template: Option<&str>,
     title: &str,
+    heading_url: Option<&str>,
     now: DateTime<Utc>,
 ) -> Result<String> {
     let mut tera = Tera::default();
@@ -63,6 +64,7 @@ pub fn render_html(
 
     let mut context = tera::Context::new();
     context.insert("title", &html_data.title);
+    context.insert("heading_url", &heading_url);
     context.insert("timestamp", &html_data.timestamp);
     context.insert("columns", &html_data.columns);
     context.insert("rows", &html_data.rows);
@@ -174,14 +176,230 @@ mod tests {
     use chrono::TimeZone;
 
     #[test]
-    fn built_in_html_template_is_rendered_correctly() {
+    fn built_in_html_template_is_rendered_correctly_with_defaults() {
         // GIVEN
         let (diff_result, commit_logs) = get_result_and_commit_logs();
         let now = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
 
         // WHEN
-        let html = render_html(&diff_result, &commit_logs, None, "versions", now)
+        let html = render_html(&diff_result, &commit_logs, None, "envee", None, now)
             .expect("result should've been Ok");
+
+        // THEN
+        insta::assert_snapshot!(html, @r#"
+        <!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+                <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔢</text></svg>">
+                <title>envee</title>
+                <link rel="preconnect" href="https://fonts.googleapis.com">
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                <link href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+                <style>
+                    html {
+                        scrollbar-gutter: stable;
+                    }
+                    body {
+                        font-family: "Open Sans", sans-serif;
+                    }
+                    .changes-section {
+                        font-family: "Fira Mono", monospace;
+                    }
+                    * {
+                        scrollbar-width: thin;
+                    }
+                    .diff-table {
+                        scrollbar-color: #928374 #282828;
+                    }
+                    .commit-log {
+                        scrollbar-color: #928374 #2e2c2c;
+                    }
+                </style>
+            </head>
+            <body class="bg-[#282828]">
+                <div class="w-4/5 max-sm:w-full max-sm:px-4 mx-auto min-h-screen pt-8">
+                    <h1 class="text-[#fbf1c7] text-4xl mb-4 font-semibold">
+                        envee
+                    </h1>
+                    <p class="text-[#928374] italic mt-4">Generated at 2025-01-16T12:00:00Z</p>
+                    <div class="flex justify-end mt-2">
+                        <button type="button" class="text-[#928374] text-xs px-2 py-1 hover:text-[#fbf1c7] focus-visible:outline focus-visible:outline-[#83a598]" onclick="copySection(this)" aria-label="Copy results table to clipboard">Copy</button>
+                    </div>
+                    <div class="mt-2 overflow-x-auto diff-table">
+                        <table class="table-auto w-full text-right max-sm:text-xs font-semibold whitespace-nowrap">
+                            <thead>
+                                <tr class="text-[#fbf1c7] bg-[#3c3836]">
+                                    <th class="px-10 py-2">app</th>
+                                    <th class="px-10 py-2">dev</th>
+                                    <th class="px-10 py-2">prod</th>
+                                    <th class="px-10 py-2">in-sync</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="text-[#fb4934]">
+                                    <td class="px-10 py-2">app-one</td>
+                                    <td class="px-10 py-2">1.1.0</td>
+                                    <td class="px-10 py-2">1.0.0</td>
+                                    <td class="px-10 py-2">✗</td>
+                                </tr>
+                                <tr class="text-[#fb4934]">
+                                    <td class="px-10 py-2">app-two</td>
+                                    <td class="px-10 py-2">2.1.0</td>
+                                    <td class="px-10 py-2">2.0.0</td>
+                                    <td class="px-10 py-2">✗</td>
+                                </tr>
+                                <tr class="text-[#b8bb26]">
+                                    <td class="px-10 py-2">app-three</td>
+                                    <td class="px-10 py-2">1.5.0</td>
+                                    <td class="px-10 py-2">1.5.0</td>
+                                    <td class="px-10 py-2">✓</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <div class="flex gap-4 items-center mt-8">
+                            <p class="text-[#fabd2f] text-xl font-semibold">Changes</p>
+                            <button class="bg-[#83a598] text-[#282828] font-semibold text-xs p-2 hover:bg-[#fabd2f]" onclick="toggleAllDetails()">
+                            Toggle All
+                            </button>
+                        </div>
+                        <div class="my-4 overflow-x-auto commit-log">
+                            <details>
+                                <summary class="text-[#83a598] cursor-pointer max-sm:text-sm">app-one</summary>
+                                <div class="mt-2 max-sm:p-2 p-4 bg-[#2e2c2c] changes-section max-sm:text-xs text-sm">
+                                    <div class="flex flex-col items-left gap-4 overflow-x-auto">
+                                        <div class="flex justify-between items-center gap-4">
+                                            <a class="text-[#928374]" href="https://github.com/org/app-one/compare/1.0.0...1.1.0" target="_blank">prod..dev (1.0.0...1.1.0)</a>
+                                            <button type="button" class="ml-auto text-[#928374] text-xs px-2 py-1 hover:text-[#fbf1c7] focus-visible:outline focus-visible:outline-[#83a598]" onclick="copySection(this)" aria-label="Copy app-one commit log to clipboard">Copy</button>
+                                        </div>
+                                        <table class="w-full text-left max-sm:text-xs text-sm whitespace-nowrap">
+                                            <tbody>
+                                                <tr class="">
+                                                    <td class="px-4 py-1 text-[#fabd2f]"><a target="_blank" href="https://github.com/org/app-one/commit/abc1234567890">ae7de14</a></td>
+                                                    <td class="px-4 py-1 text-[#83a598]"><a target="_blank" href="https://github.com/org/app-one/commit/abc1234567890">First commit</a></td>
+                                                    <td class="px-4 py-1 text-[#d3869b]"><a target="_blank" href="https://github.com/org/app-one/commit/abc1234567890">User A</a></td>
+                                                    <td class="px-4 py-1 text-[#bdae93]"><a target="_blank" href="https://github.com/org/app-one/commit/abc1234567890">Jan 15, 2025</a></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                        <div class="my-4 overflow-x-auto commit-log">
+                            <details>
+                                <summary class="text-[#83a598] cursor-pointer max-sm:text-sm">app-two</summary>
+                                <div class="mt-2 max-sm:p-2 p-4 bg-[#2e2c2c] changes-section max-sm:text-xs text-sm">
+                                    <div class="flex flex-col items-left gap-4 overflow-x-auto">
+                                        <div class="flex justify-between items-center gap-4">
+                                            <a class="text-[#928374]" href="https://github.com/org/app-two/compare/2.0.0...2.1.0" target="_blank">prod..dev (2.0.0...2.1.0)</a>
+                                            <button type="button" class="ml-auto text-[#928374] text-xs px-2 py-1 hover:text-[#fbf1c7] focus-visible:outline focus-visible:outline-[#83a598]" onclick="copySection(this)" aria-label="Copy app-two commit log to clipboard">Copy</button>
+                                        </div>
+                                        <table class="w-full text-left max-sm:text-xs text-sm whitespace-nowrap">
+                                            <tbody>
+                                                <tr class="">
+                                                    <td class="px-4 py-1 text-[#fabd2f]"><a target="_blank" href="https://github.com/org/app-two/commit/1443d43">1443d43</a></td>
+                                                    <td class="px-4 py-1 text-[#83a598]"><a target="_blank" href="https://github.com/org/app-two/commit/1443d43">add cli test for when no versions match app filter</a></td>
+                                                    <td class="px-4 py-1 text-[#d3869b]"><a target="_blank" href="https://github.com/org/app-two/commit/1443d43">User A</a></td>
+                                                    <td class="px-4 py-1 text-[#bdae93]"><a target="_blank" href="https://github.com/org/app-two/commit/1443d43">Jan 16, 2025</a></td>
+                                                </tr>
+                                                <tr class="">
+                                                    <td class="px-4 py-1 text-[#fabd2f]"><a target="_blank" href="https://github.com/org/app-two/commit/c536d77">c536d77</a></td>
+                                                    <td class="px-4 py-1 text-[#83a598]"><a target="_blank" href="https://github.com/org/app-two/commit/c536d77">allow filtering apps to run for (#3) commit</a></td>
+                                                    <td class="px-4 py-1 text-[#d3869b]"><a target="_blank" href="https://github.com/org/app-two/commit/c536d77">User B</a></td>
+                                                    <td class="px-4 py-1 text-[#bdae93]"><a target="_blank" href="https://github.com/org/app-two/commit/c536d77">Jan 16, 2025</a></td>
+                                                </tr>
+                                                <tr class="">
+                                                    <td class="px-4 py-1 text-[#fabd2f]"><a target="_blank" href="https://github.com/org/app-two/commit/2ff3e97">2ff3e97</a></td>
+                                                    <td class="px-4 py-1 text-[#83a598]"><a target="_blank" href="https://github.com/org/app-two/commit/2ff3e97">allow configuring table style (#2) commit</a></td>
+                                                    <td class="px-4 py-1 text-[#d3869b]"><a target="_blank" href="https://github.com/org/app-two/commit/2ff3e97">User A</a></td>
+                                                    <td class="px-4 py-1 text-[#bdae93]"><a target="_blank" href="https://github.com/org/app-two/commit/2ff3e97">Jan 15, 2025</a></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                    <p class="text-[#928374] italic my-10 pt-2 border-t-2 border-[#92837433]">Built using <a class="font-bold" href="https://github.com/dhth/envee" target="_blank">envee</a></p>
+                </div>
+                <button id="scrollToTop" onclick="window.scrollTo({top: 0, behavior: 'instant'});"
+                    class="hidden fixed bottom-4 left-4 z-50 bg-[#928374] text-[#282828] px-4 py-2 rounded-full shadow-lg hover:bg-[#d3869b] font-bold transition"
+                    aria-label="Go to top">
+                ↑
+                </button>
+            </body>
+            <script>
+                const scrollToTopButton = document.getElementById("scrollToTop");
+                let allDetailsOpen = false;
+                
+                function toggleAllDetails() {
+                    allDetailsOpen = !allDetailsOpen;
+                    document.querySelectorAll("details").forEach((detail) => {
+                        detail.open = allDetailsOpen;
+                    });
+                }
+
+                async function copySection(button) {
+                    const section = button.closest(".commit-log");
+                    const table = section ? section.querySelector("table") : document.querySelector(".diff-table table");
+                    const heading = section ? [
+                        section.querySelector("summary").textContent.trim(),
+                        section.querySelector(".changes-section a")?.textContent.trim(),
+                    ].filter(Boolean) : [];
+                    const rows = Array.from(table?.rows ?? [], (row) =>
+                        Array.from(row.cells, (cell) => cell.textContent.trim())
+                    );
+                    const widths = (rows[0] ?? []).map((_, column) =>
+                        Math.max(...rows.map((row) => Array.from(row[column]).length))
+                    );
+                    const lines = rows.map((row) =>
+                        row.map((cell, column) => cell.padEnd(widths[column])).join("  ").trimEnd()
+                    );
+                    const text = [...heading, ...(section && lines.length ? [""] : []), ...lines].join("\n");
+
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        button.textContent = "Copied!";
+                    } catch {
+                        button.textContent = "Copy failed";
+                    }
+                    setTimeout(() => { button.textContent = "Copy"; }, 2000);
+                }
+                
+                window.addEventListener("scroll", function () {
+                    if (window.scrollY > 100) {
+                        scrollToTopButton.classList.remove("hidden");
+                    } else {
+                        scrollToTopButton.classList.add("hidden");
+                    }
+                });
+            </script>
+        </html>
+        "#);
+    }
+
+    #[test]
+    fn built_in_html_template_is_rendered_correctly_with_overrides() {
+        // GIVEN
+        let (diff_result, commit_logs) = get_result_and_commit_logs();
+        let now = Utc.with_ymd_and_hms(2025, 1, 16, 12, 0, 0).unwrap();
+
+        // WHEN
+        let html = render_html(
+            &diff_result,
+            &commit_logs,
+            None,
+            "versions",
+            Some("./?team=platform&label=\"systems\""),
+            now,
+        )
+        .expect("result should've been Ok");
 
         // THEN
         insta::assert_snapshot!(html, @r#"
@@ -219,8 +437,10 @@ mod tests {
             </head>
             <body class="bg-[#282828]">
                 <div class="w-4/5 max-sm:w-full max-sm:px-4 mx-auto min-h-screen pt-8">
-                    <h1 class="text-[#fbf1c7] text-3xl mb-4 font-semibold">
-                        versions
+                    <h1 class="text-[#fbf1c7] text-4xl mb-4 font-semibold">
+                        <a href=".&#x2F;?team=platform&amp;label=&quot;systems&quot;">
+                            versions
+                        </a>
                     </h1>
                     <p class="text-[#928374] italic mt-4">Generated at 2025-01-16T12:00:00Z</p>
                     <div class="flex justify-end mt-2">
@@ -394,6 +614,7 @@ mod tests {
             &commit_logs,
             Some(TEST_HTML_TEMPLATE),
             "versions",
+            None,
             now,
         )
         .expect("result should've been Ok");
@@ -521,6 +742,7 @@ mod tests {
             &commit_logs,
             Some(TEST_HTML_TEMPLATE),
             "test",
+            None,
             now,
         )
         .expect("result should've been Ok");

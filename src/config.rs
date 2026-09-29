@@ -45,6 +45,7 @@ pub struct StdoutConfig {
 pub struct HtmlConfig {
     pub output_path: PathBuf,
     pub title: String,
+    pub heading_url: Option<String>,
     pub template: Option<String>,
 }
 

@@ -33,6 +33,7 @@ pub fn render_output(
                 commit_logs,
                 html_config.template.as_deref(),
                 &html_config.title,
+                html_config.heading_url.as_deref(),
                 now,
             )?
         }
@@ -165,6 +166,7 @@ mod tests {
             output_type: OutputType::Html(HtmlConfig {
                 output_path: PathBuf::from("/tmp/output.html"),
                 title: "versions".to_string(),
+                heading_url: None,
                 template: Some(TEST_HTML_TEMPLATE.to_string()),
             }),
         };
@@ -268,6 +270,7 @@ mod tests {
             output_type: OutputType::Html(HtmlConfig {
                 output_path: PathBuf::from("/tmp/output.html"),
                 title: "versions".to_string(),
+                heading_url: None,
                 template: Some(TEST_HTML_TEMPLATE.to_string()),
             }),
         };
