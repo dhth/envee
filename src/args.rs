@@ -56,6 +56,13 @@ pub enum EnveeCommand {
         /// Title for HTML report
         #[arg(long = "html-title", value_name = "STRING", default_value = "envee")]
         html_title: String,
+        /// Link destination for the HTML report heading
+        #[arg(
+            long = "html-heading-link",
+            value_name = "URL",
+            value_parser = clap::builder::NonEmptyStringValueParser::new()
+        )]
+        html_heading_link: Option<String>,
         /// Path to custom HTML template file
         #[arg(long = "html-template", value_name = "PATH")]
         html_template_path: Option<PathBuf>,
@@ -75,6 +82,7 @@ impl std::fmt::Display for Args {
                 stdout_plain_output,
                 html_output_path,
                 html_title,
+                html_heading_link,
                 html_template_path,
             } => {
                 let flags_based_on_output = match output_format {
@@ -90,10 +98,12 @@ plain output:                         {}
                             r#"
 output path:                          {}
 title:                                {}
+heading link:                         {}
 template path:                        {}
 "#,
                             html_output_path.to_string_lossy(),
                             html_title,
+                            html_heading_link.as_deref().unwrap_or(NOT_PROVIDED),
                             html_template_path
                                 .as_ref()
                                 .map(|p| p.to_string_lossy().to_string())

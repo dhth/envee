@@ -36,6 +36,7 @@ async fn main() -> anyhow::Result<()> {
             stdout_plain_output,
             html_output_path,
             html_title,
+            html_heading_link,
             html_template_path,
         } => {
             // READ AND VALIDATE INPUT
@@ -74,6 +75,7 @@ async fn main() -> anyhow::Result<()> {
                         OutputType::Html(HtmlConfig {
                             output_path: html_output_path,
                             title: html_title,
+                            heading_url: html_heading_link,
                             template,
                         })
                     }
