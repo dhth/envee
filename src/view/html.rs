@@ -359,7 +359,7 @@ mod tests {
                     const lines = rows.map((row) =>
                         row.map((cell, column) => section ? cell.padEnd(widths[column]) : cell.padStart(widths[column])).join("  ").trimEnd()
                     );
-                    const text = [...heading, ...lines].join("\n");
+                    const text = [...heading, ...(section && lines.length ? [""] : []), ...lines].join("\n");
 
                     try {
                         await navigator.clipboard.writeText(text);
