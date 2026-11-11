@@ -1,4 +1,4 @@
-min_version = "2026.9.17"
+min_version = "2026.11.1"
 
 [settings]
 idiomatic_version_file_enable_tools = ["rust"]
